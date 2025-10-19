@@ -12,6 +12,7 @@ const translations = {
     invention: 'Invention',
     brand: 'Brand',
     design: 'Design',
+    document: 'Document',
     other: 'Other',
     sortBy: 'Sort By',
     newest: 'Newest First',
@@ -26,6 +27,7 @@ const translations = {
     invention: 'اختراع',
     brand: 'برند',
     design: 'طراحی',
+    document: 'داکیومنت',
     other: 'سایر',
     sortBy: 'مرتب‌سازی بر اساس',
     newest: 'جدیدترین',
@@ -40,6 +42,7 @@ const translations = {
     invention: 'اختراع',
     brand: 'علامة تجارية',
     design: 'تصميم',
+    document: 'وثيقة',
     other: 'أخرى',
     sortBy: 'فرز حسب',
     newest: 'الأحدث أولاً',
@@ -54,6 +57,7 @@ const translations = {
     invention: '发明',
     brand: '品牌',
     design: '设计',
+    document: '文档',
     other: '其他',
     sortBy: '排序方式',
     newest: '最新优先',
@@ -68,6 +72,7 @@ const translations = {
     invention: 'आविष्कार',
     brand: 'ब्रांड',
     design: 'डिज़ाइन',
+    document: 'दस्तावेज़',
     other: 'अन्य',
     sortBy: 'इसके अनुसार क्रमबद्ध करें',
     newest: 'नवीनतम पहले',
@@ -96,6 +101,7 @@ const translations = {
     invention: 'Erfindung',
     brand: 'Marke',
     design: 'Design',
+    document: 'Dokument',
     other: 'Andere',
     sortBy: 'Sortieren nach',
     newest: 'Neueste zuerst',
@@ -110,6 +116,7 @@ const translations = {
     invention: 'Invention',
     brand: 'Marque',
     design: 'Autre',
+    document: 'Document',
     other: 'Autre',
     sortBy: 'Trier par',
     newest: 'Le plus récent d\'abord',
@@ -124,6 +131,7 @@ const translations = {
     invention: 'Invención',
     brand: 'Marca',
     design: 'Diseño',
+    document: 'Documento',
     other: 'Otro',
     sortBy: 'Ordenar por',
     newest: 'Más nuevos primero',
@@ -138,6 +146,7 @@ const translations = {
     invention: 'Изобретение',
     brand: 'Бренд',
     design: 'Дизайн',
+    document: 'Документ',
     other: 'Другое',
     sortBy: 'Сортировать по',
     newest: 'Сначала новые',
@@ -222,6 +231,7 @@ const translations = {
     invention: 'Buluş',
     brand: 'Marka',
     design: 'Tasarım',
+    document: 'Belge',
     other: 'Diğer',
     sortBy: 'Sırala',
     newest: 'Önce En Yeni',
@@ -322,6 +332,7 @@ export default function DashboardFilters({ filters, onFilterChange }) {
             <SelectItem value="invention">{t.invention}</SelectItem>
             <SelectItem value="brand">{t.brand}</SelectItem>
             <SelectItem value="design">{t.design}</SelectItem>
+            <SelectItem value="document">{t.document}</SelectItem>
             <SelectItem value="other">{t.other}</SelectItem>
           </SelectContent>
         </Select>

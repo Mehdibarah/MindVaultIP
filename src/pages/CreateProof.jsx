@@ -83,9 +83,11 @@ export default function CreateProof() {
         categoryResearch: '🔬 Research/Discovery',
         categorySoftware: '💻 Software',
         categoryBusiness: '📊 Business Method',
+        categoryDocument: '📄 Document',
         categoryOther: '📦 Other',
         descriptionLabel: 'Description',
         descriptionPlaceholder: 'Describe your innovation, its purpose, and key features...',
+        descriptionPlaceholderDocument: 'Describe your document and its purpose for proof of existence...',
         fileLabel: 'Upload File *',
         publicLabel: 'Make publicly visible in marketplace',
         publicHint: 'Private innovations are still registered but not shown in gallery.',
@@ -299,14 +301,31 @@ export default function CreateProof() {
                                 <SelectItem value="research">{t.categoryResearch}</SelectItem>
                                 <SelectItem value="software">{t.categorySoftware}</SelectItem>
                                 <SelectItem value="business">{t.categoryBusiness}</SelectItem>
+                                <SelectItem value="document">{t.categoryDocument}</SelectItem>
                                 <SelectItem value="other">{t.categoryOther}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
 
+                    {/* Document category description */}
+                    {category === 'document' && (
+                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                            <div className="flex items-start gap-3">
+                                <div className="text-blue-400 text-lg">📄</div>
+                                <div>
+                                    <h4 className="text-blue-400 font-medium mb-1">Document Registration</h4>
+                                    <p className="text-gray-300 text-sm">
+                                        Store and timestamp your document permanently on the blockchain to preserve authorship or proof of existence. 
+                                        Only the file hash is stored on-chain, not the document content, ensuring privacy.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <div>
                         <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-2">{t.descriptionLabel}</label>
-                        <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t.descriptionPlaceholder} rows={5} maxLength={1000} className="bg-[#0B1220] border-gray-600" />
+                        <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={category === 'document' ? t.descriptionPlaceholderDocument : t.descriptionPlaceholder} rows={5} maxLength={1000} className="bg-[#0B1220] border-gray-600" />
                         <small className="text-gray-500 text-xs mt-1 block text-right">{description.length}/1000 {t.titleChars}</small>
                     </div>
                     

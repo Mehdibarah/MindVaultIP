@@ -2,8 +2,19 @@
 import { useEffect, useState, useRef } from "react";
 import { useAccount, useBalance, useSwitchChain, useDisconnect } from 'wagmi'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
-import { base } from 'wagmi/chains'
+import { base } from '@/lib/wagmi'
 import { useNavigate } from 'react-router-dom';
+
+// Custom hook for SSR hydration guard
+function useIsMounted() {
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  return mounted;
+}
 
 // ==========================================
 // تنظیمات Base Network
@@ -21,6 +32,8 @@ const BASE_CONFIG = {
 // کامپوننت اصلی
 // ==========================================
 export default function UnifiedWalletConnect() {
+  // Always call all hooks consistently
+  const mounted = useIsMounted();
   const { address, isConnected, chainId } = useAccount()
   const { data: balance } = useBalance({ address })
   const { switchChain } = useSwitchChain()
@@ -30,6 +43,25 @@ export default function UnifiedWalletConnect() {
   
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
+
+  // Handle clicks outside menu - must be called consistently
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showMenu]);
+
+  // Return null until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return null
+  }
 
   // ==========================================
   // تبدیل Balance
@@ -100,21 +132,6 @@ export default function UnifiedWalletConnect() {
     }
   };
 
-  // ==========================================
-  // بستن منو با کلیک بیرون
-  // ==========================================
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setShowMenu(false);
-      }
-    };
-
-    if (showMenu) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
-    }
-  }, [showMenu]);
 
   // ==========================================
   // نمایش آدرس کوتاه
@@ -132,17 +149,15 @@ export default function UnifiedWalletConnect() {
         {/* دکمه MetaMask */}
         <button
           onClick={connectMetaMask}
-          className="w-full md:w-auto group relative px-3 py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-xs rounded-lg shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-10 h-10 md:w-auto md:px-3 group relative py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-xs rounded-lg shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shrink-0 grow-0 basis-auto"
         >
-          <div className="flex items-center justify-center gap-1.5">
-            <svg className="w-4 h-4" viewBox="0 0 40 40" fill="none">
-              <path d="M32.9582 1L20 13.125L22.9167 6.875L32.9582 1Z" fill="white"/>
-              <path d="M7.04176 1L19.8749 13.2083L17.0832 6.875L7.04176 1Z" fill="white"/>
-              <path d="M28.2917 27.7917L25.0417 33.3333L32.3333 35.4167L34.5 28.0417L28.2917 27.7917Z" fill="white"/>
-              <path d="M5.5 28.0417L7.66667 35.4167L15 33.3333L11.7083 27.7917L5.5 28.0417Z" fill="white"/>
-            </svg>
-            <span className="hidden sm:inline">Connect Wallet</span>
-          </div>
+          <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 40 40" fill="none">
+            <path d="M32.9582 1L20 13.125L22.9167 6.875L32.9582 1Z" fill="white"/>
+            <path d="M7.04176 1L19.8749 13.2083L17.0832 6.875L7.04176 1Z" fill="white"/>
+            <path d="M28.2917 27.7917L25.0417 33.3333L32.3333 35.4167L34.5 28.0417L28.2917 27.7917Z" fill="white"/>
+            <path d="M5.5 28.0417L7.66667 35.4167L15 33.3333L11.7083 27.7917L5.5 28.0417Z" fill="white"/>
+          </svg>
+          <span className="hidden md:inline truncate">Connect Wallet</span>
         </button>
       </div>
     );
@@ -151,7 +166,7 @@ export default function UnifiedWalletConnect() {
   // ==========================================
   // UI - اگر متصل است
   // ==========================================
-  const isWrongNetwork = chainId && chainId !== base.id;
+  const isWrongNetwork = chainId && chainId !== base.id; // base.id is 8453
 
   return (
     <div className="relative" ref={menuRef}>
@@ -160,7 +175,7 @@ export default function UnifiedWalletConnect() {
         <div className="mb-3 px-4 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
           <button
             onClick={switchToBase}
-            className="text-sm text-yellow-400 hover:text-yellow-300 font-medium"
+            className="w-full text-sm text-yellow-400 hover:text-yellow-300 font-medium flex items-center justify-center gap-2"
           >
             ⚠️ Switch to Base Network
           </button>
@@ -170,20 +185,18 @@ export default function UnifiedWalletConnect() {
       {/* دکمه Wallet متصل */}
       <button
         onClick={() => setShowMenu(!showMenu)}
-        className="group relative px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+        className="w-10 h-10 md:w-auto md:px-3 group relative py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-xs rounded-lg shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-1.5 shrink-0 grow-0 basis-auto"
       >
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse" />
-          <span className="font-mono text-sm">{shortAddr}</span>
-          <svg 
-            className={`w-4 h-4 transition-transform duration-200 ${showMenu ? 'rotate-180' : ''}`} 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
+        <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse flex-shrink-0" />
+        <span className="hidden md:inline font-mono text-sm truncate">{shortAddr}</span>
+        <svg 
+          className={`w-4 h-4 transition-transform duration-200 flex-shrink-0 ${showMenu ? 'rotate-180' : ''}`} 
+          fill="none" 
+          viewBox="0 0 24 24" 
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
       </button>
 
       {/* Dropdown Menu */}

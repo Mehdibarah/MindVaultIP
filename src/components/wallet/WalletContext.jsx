@@ -1,6 +1,7 @@
-import React, { createContext, useContext } from 'react'
-import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import React, { createContext, useContext, useState, useEffect } from 'react'
+import { useAccount, useDisconnect } from 'wagmi'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
+import { base } from '@/lib/wagmi'
 
 const WalletContext = createContext()
 
@@ -8,6 +9,12 @@ export function WalletProvider({ children }) {
   const { address, isConnected, chainId } = useAccount()
   const { open } = useWeb3Modal()
   const { disconnect: wagmiDisconnect } = useDisconnect()
+  const [mounted, setMounted] = useState(false)
+
+  // Guard SSR hydration
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const connect = () => {
     if (!isConnected) {
@@ -25,10 +32,16 @@ export function WalletProvider({ children }) {
     }
   }
 
+  // Return null until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return null
+  }
+
   const value = {
     address,
     isConnected,
     chainId,
+    isBaseChain: chainId === base.id,
     connect,
     disconnect,
   }

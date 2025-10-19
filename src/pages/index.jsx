@@ -34,7 +34,9 @@ import ApplyExpert from "./ApplyExpert";
 
 import Profile from "./Profile";
 
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
+import { FEATURE_AI_MENTOR, FEATURE_MESSAGES, FEATURE_MARKETPLACE, FEATURE_EXPERT_DASHBOARD, FEATURE_ADMIN_PANEL } from "@/utils/featureFlags";
+import { FeatureGuard } from "@/components/common/FeatureGuard";
 
 const PAGES = {
     
@@ -107,13 +109,25 @@ function PagesContent() {
                 
                 <Route path="/Landing" element={<Landing />} />
                 
-                <Route path="/AIMentor" element={<AIMentor />} />
+                <Route path="/AIMentor" element={
+                  <FeatureGuard feature={FEATURE_AI_MENTOR}>
+                    <AIMentor />
+                  </FeatureGuard>
+                } />
                 
                 <Route path="/Gallery" element={<Gallery />} />
                 
-                <Route path="/Marketplace" element={<Marketplace />} />
+                <Route path="/Marketplace" element={
+                  <FeatureGuard feature={FEATURE_MARKETPLACE}>
+                    <Marketplace />
+                  </FeatureGuard>
+                } />
                 
-                <Route path="/AdminPanel" element={<AdminPanel />} />
+                <Route path="/AdminPanel" element={
+                  <FeatureGuard feature={FEATURE_ADMIN_PANEL}>
+                    <AdminPanel />
+                  </FeatureGuard>
+                } />
                 
                 <Route path="/MindVaultIPWhitePaper" element={<MindVaultIPWhitePaper />} />
                 
@@ -123,11 +137,19 @@ function PagesContent() {
                 
                 <Route path="/WalletSecurity" element={<WalletSecurity />} />
                 
-                <Route path="/Messages" element={<Messages />} />
+                <Route path="/Messages" element={
+                  <FeatureGuard feature={FEATURE_MESSAGES}>
+                    <Messages />
+                  </FeatureGuard>
+                } />
                 
                 <Route path="/Watchlist" element={<Watchlist />} />
                 
-                <Route path="/ExpertDashboard" element={<ExpertDashboard />} />
+                <Route path="/ExpertDashboard" element={
+                  <FeatureGuard feature={FEATURE_EXPERT_DASHBOARD}>
+                    <ExpertDashboard />
+                  </FeatureGuard>
+                } />
                 
                 <Route path="/ApplyExpert" element={<ApplyExpert />} />
                 

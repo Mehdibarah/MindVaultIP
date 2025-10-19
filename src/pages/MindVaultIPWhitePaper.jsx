@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { FileText, Award } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { translations } from '@/components/utils/whitePaperTranslations.jsx';
+import { shortenFounderDescription } from '@/utils/shortenFounderDescription';
 import {
   Table,
   TableBody,
@@ -112,7 +113,7 @@ export default function WhitePaperPage() {
                                         <TableCell className="font-medium">{item.category}</TableCell>
                                         <TableCell>{item.tokens}</TableCell>
                                         <TableCell>{item.percent}</TableCell>
-                                        <TableCell>{item.description}</TableCell>
+                                        <TableCell>{shortenFounderDescription(item.description, language)}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

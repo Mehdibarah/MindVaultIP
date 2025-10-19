@@ -25,6 +25,7 @@ const translations = {
     logo: 'Logos',
     trademark: 'Trademarks',
     idea: 'Ideas',
+    document: 'Document',
     other: 'Other',
     allStatus: 'All Status',
     aiApproved: '✅ AI Approved',
@@ -58,6 +59,7 @@ const translations = {
     logo: 'لوگوها',
     trademark: 'علامت تجاری',
     idea: 'ایده‌ها',
+    document: 'داکیومنت',
     other: 'سایر',
     allStatus: 'همه وضعیت‌ها',
     aiApproved: '✅ تایید شده',
@@ -91,6 +93,7 @@ const translations = {
     logo: '徽标',
     trademark: '商标',
     idea: '想法',
+    document: '文档',
     other: '其他',
     allStatus: '所有状态',
     aiApproved: '✅ AI 已批准',
@@ -124,6 +127,7 @@ const translations = {
     logo: 'लोगो',
     trademark: 'ट्रेडमार्क',
     idea: 'विचार',
+    document: 'दस्तावेज़',
     other: 'अन्य',
     allStatus: 'सभी स्थिति',
     aiApproved: '✅ AI स्वीकृत',
@@ -191,6 +195,7 @@ const translations = {
     trademark: 'Markenzeichen',
     idea: 'Idee',
     design: 'Design',
+    document: 'Dokument',
     other: 'Andere',
     allStatus: 'Alle Status',
     aiApproved: '✅ KI-genehmigt',
@@ -557,6 +562,7 @@ const translations = {
     logo: 'Logolar',
     trademark: 'Ticari Markalar',
     idea: 'Fikirler',
+    document: 'Belge',
     other: 'Diğer',
     allStatus: 'Tüm Durumlar',
     aiApproved: '✅ AI Onaylı',
@@ -834,6 +840,7 @@ export default function Gallery() {
                   <SelectItem value="trademark" className="text-white hover:bg-gray-700">™️ {t.trademark}</SelectItem>
                   <SelectItem value="idea" className="text-white hover:bg-gray-700">💡 {t.idea}</SelectItem>
                   <SelectItem value="design" className="text-white hover:bg-gray-700">📐 {t.design}</SelectItem>
+                  <SelectItem value="document" className="text-white hover:bg-gray-700">📄 {t.document}</SelectItem>
                   <SelectItem value="other" className="text-white hover:bg-gray-700">🌐 {t.other}</SelectItem>
                 </SelectContent>
               </Select>

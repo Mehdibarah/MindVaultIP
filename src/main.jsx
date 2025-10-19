@@ -4,7 +4,7 @@ import App from '@/App.jsx'
 import '@/index.css'
 import { WagmiProvider } from 'wagmi'
 import { QueryClientProvider } from '@tanstack/react-query'
-import { setupWeb3Modal, wagmiConfig, queryClient } from './lib/wallet'
+import { setupWeb3Modal, wagmiConfig, queryClient } from './lib/wagmi'
 
 // Global error handler to catch unhandled errors
 window.addEventListener('error', (event) => {

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { ArrowRight, Globe, Lock, ShieldCheck } from 'lucide-react';
 import { translations } from '../components/utils/landingPageTranslations';
+import { getCurrentLocale, isRTL } from '@/utils/i18nConfig';
 
 const Section = ({ children, className = '' }) => (
   <motion.section
@@ -27,11 +28,11 @@ const Quote = ({ children }) => (
 );
 
 export default function LandingPage() {
-  const [language, setLanguage] = useState(localStorage.getItem('lang') || 'en');
+  const [language, setLanguage] = useState(getCurrentLocale());
 
   useEffect(() => {
     const handleLanguageChange = () => {
-      setLanguage(localStorage.getItem('lang') || 'en');
+      setLanguage(getCurrentLocale());
     };
     window.addEventListener('languageChange', handleLanguageChange);
     return () => {
@@ -40,10 +41,10 @@ export default function LandingPage() {
   }, []);
   
   const t = translations[language] || translations.en;
-  const isRTL = ['fa', 'ar', 'ur', 'bal'].includes(language);
+  const isRTLDirection = isRTL(language);
 
   return (
-    <div className="bg-[#0B1220] text-white font-sans" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="bg-[#0B1220] text-white font-sans" dir={isRTLDirection ? 'rtl' : 'ltr'}>
 
       {/* Hero Section */}
       <Section className="text-center pt-24 md:pt-40">

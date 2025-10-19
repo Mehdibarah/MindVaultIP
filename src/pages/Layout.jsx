@@ -16,9 +16,10 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import UnifiedWalletConnect from "@/components/wallet/UnifiedWalletConnect";
 import { safeApiCall } from "@/utils/apiErrorHandler";
+import { FEATURE_AI_MENTOR, FEATURE_MESSAGES, FEATURE_MARKETPLACE, FEATURE_EXPERT_DASHBOARD, FEATURE_ADMIN_PANEL } from "@/utils/featureFlags";
 
 // Updated Lucide React imports
-import { Home, LayoutDashboard, User, BrainCircuit, Bot, ShoppingCart, MessageSquare, List, Compass, BookOpen, Shield, Banknote, UserCog, MoreHorizontal, Languages, Coins, PlusCircle, Menu, X } from "lucide-react";
+import { Home, LayoutDashboard, User, Bot, ShoppingCart, MessageSquare, List, Compass, BookOpen, Shield, Banknote, UserCog, MoreHorizontal, Languages, Coins, PlusCircle, Menu, X } from "lucide-react";
 
 
 const translations = {
@@ -51,7 +52,7 @@ const translations = {
     expertDashboard: 'پنل متخصصین',
     gallery: 'گالری',
     messages: 'پیام‌ها',
-    aiMentor: 'مربی هوشمند',
+    aiMentor: 'مربی هوش مصنوعی',
     marketplace: 'بازار',
     watchlist: 'لیست من',
     profile: 'پروفایل',
@@ -99,7 +100,6 @@ const translations = {
     expertDashboard: "विशेषज्ञ पैनल",
     gallery: "गैलरी",
     messages: "संदेश",
-    aiMentor: "एआई मेंटर",
     marketplace: "बाजार",
     watchlist: "वॉचलिस्ट",
     profile: "प्रोफ़ाइल",
@@ -147,7 +147,6 @@ const translations = {
     expertDashboard: "Panneau d'experts",
     gallery: "Galerie",
     messages: "Messages",
-    aiMentor: "Mentor IA",
     marketplace: "Marché",
     watchlist: "Liste de surveillance",
     profile: "Profil",
@@ -171,7 +170,6 @@ const translations = {
     expertDashboard: "لوحة الخبراء",
     gallery: "المعرض",
     messages: "الرسائل",
-    aiMentor: "المرشد الذكي",
     marketplace: "السوق",
     watchlist: "قائمة المراقبة",
     profile: "الملف الشخصي",
@@ -195,7 +193,6 @@ const translations = {
     expertDashboard: "Expertenpanel",
     gallery: "Galerie",
     messages: "Nachrichten",
-    aiMentor: "KI-Mentor",
     marketplace: "Marktplatz",
     watchlist: "Beobachtungsliste",
     profile: "Profil",
@@ -219,7 +216,6 @@ const translations = {
     expertDashboard: "ماہر پینل",
     gallery: "گیلری",
     messages: "پیغامات",
-    aiMentor: "اے آئی مینٹر",
     marketplace: "مارکیٹ پلیس",
     watchlist: "واچ لسٹ",
     profile: "پروفائل",
@@ -243,7 +239,6 @@ const translations = {
     expertDashboard: "Панель экспертов",
     gallery: "Галерея",
     messages: "Сообщения",
-    aiMentor: "ИИ-ментор",
     marketplace: "Торговая площадка",
     watchlist: "Список отслеживания",
     profile: "Профиль",
@@ -267,7 +262,6 @@ const translations = {
     expertDashboard: "専門家パネル",
     gallery: "ギャラリー",
     messages: "メッセージ",
-    aiMentor: "AIメンター",
     marketplace: "マーケットプレイス",
     watchlist: "ウォッチリスト",
     profile: "プロフィール",
@@ -291,7 +285,6 @@ const translations = {
     expertDashboard: "전문가 패널",
     gallery: "갤러리",
     messages: "메시지",
-    aiMentor: "AI 멘토",
     marketplace: "마켓플레이스",
     watchlist: "관심 목록",
     profile: "프로필",
@@ -315,7 +308,6 @@ const translations = {
     expertDashboard: "Jopo la Wataalam",
     gallery: "Nyumba ya Sanaa",
     messages: "Ujumbe",
-    aiMentor: "Mshauri wa AI",
     marketplace: "Soko",
     watchlist: "Orodha ya Kutazama",
     profile: "Profaili",
@@ -338,7 +330,6 @@ const translations = {
     expertDashboard: "Kwamitin Masana",
     gallery: "Gallery",
     messages: "Saƙonni",
-    aiMentor: "Malami na AI",
     marketplace: "Kasuwa",
     watchlist: "Jerin Kallo",
     profile: "Furofayil",
@@ -362,7 +353,6 @@ const translations = {
     expertDashboard: "Panaali Amoye",
     gallery: "Àwòrán",
     messages: "Awọn ifiranṣẹ",
-    aiMentor: "Olùkọ AI",
     marketplace: "Ọjà",
     watchlist: "Àkójọ àtẹ̀lé",
     profile: "Profaili",
@@ -386,7 +376,6 @@ const translations = {
     expertDashboard: "Uzman Paneli",
     gallery: "Galeri",
     messages: "Mesajlar",
-    aiMentor: "Yapay Zeka Mentoru",
     marketplace: "Pazar Yeri",
     watchlist: "İzleme Listesi",
     profile: "Profil",
@@ -410,7 +399,6 @@ const translations = {
     expertDashboard: 'ماہرین پینل',
     gallery: 'گالری',
     messages: 'پیغام',
-    aiMentor: 'اے آئی استاد',
     marketplace: 'بازار',
     watchlist: 'میری فہرست',
     profile: 'پروفائل',
@@ -526,29 +514,32 @@ function AppLayout({ children, currentPageName }) {
   
   const t = translations[language] || translations.en;
   
-  const mainNavItems = [
-    { name: ['fa', 'ar', 'ur', 'bal'].includes(language) ? 'خانه' : 'Home', icon: Home, page: 'Landing' },
-    { name: t.dashboard, icon: LayoutDashboard, page: 'Dashboard' },
-    { name: t.createProof, icon: PlusCircle, page: 'CreateProof' },
-    { name: t.gallery, icon: Compass, page: 'Gallery' },
-    { name: t.watchlist, icon: List, page: 'Watchlist' },
-    { name: t.profile, icon: User, page: 'Profile' },
-    { name: t.expertDashboard, icon: BrainCircuit, page: 'ExpertDashboard' },
-  ];
+      const mainNavItems = [
+        { name: ['fa', 'ar', 'ur', 'bal'].includes(language) ? 'خانه' : 'Home', icon: Home, page: 'Landing' },
+        { name: t.dashboard, icon: LayoutDashboard, page: 'Dashboard' },
+        { name: t.createProof, icon: PlusCircle, page: 'CreateProof' },
+        { name: t.gallery, icon: Compass, page: 'Gallery' },
+        { name: t.watchlist, icon: List, page: 'Watchlist' },
+        { name: t.profile, icon: User, page: 'Profile' },
+        ...(FEATURE_EXPERT_DASHBOARD ? [{ name: t.expertDashboard, icon: UserCog, page: 'ExpertDashboard' }] : []),
+      ];
 
-  const moreNavItems = [
-    { name: t.messages, icon: MessageSquare, page: 'Messages' },
-    { name: t.aiMentor, icon: Bot, page: 'AIMentor' },
-    { name: t.marketplace, icon: ShoppingCart, page: 'Marketplace' },
-    { name: t.whitePaper, icon: BookOpen, page: 'MindVaultIPWhitePaper' },
-    { name: t.walletSecurity, icon: Shield, page: 'WalletSecurity' },
-  ];
+      const moreNavItems = [
+        ...(FEATURE_MESSAGES ? [{ name: t.messages, icon: MessageSquare, page: 'Messages' }] : []),
+        ...(FEATURE_AI_MENTOR ? [{ name: t.aiMentor, icon: Bot, page: 'AIMentor' }] : []),
+        ...(FEATURE_MARKETPLACE ? [{ name: t.marketplace, icon: ShoppingCart, page: 'Marketplace' }] : []),
+        { name: t.whitePaper, icon: BookOpen, page: 'MindVaultIPWhitePaper' },
+        { name: t.walletSecurity, icon: Shield, page: 'WalletSecurity' },
+      ];
 
-  const finalMoreNavItems = userRole === 'admin' 
+  const finalMoreNavItems = (userRole === 'admin' && FEATURE_ADMIN_PANEL)
     ? [...moreNavItems, { name: t.adminPanel, icon: UserCog, page: 'AdminPanel' }] 
     : moreNavItems;
 
-  const fullScreenPages = ['AIMentor', 'Messages'];
+  const fullScreenPages = [
+    ...(FEATURE_AI_MENTOR ? ['AIMentor'] : []),
+    ...(FEATURE_MESSAGES ? ['Messages'] : [])
+  ];
   const isFullScreenPage = fullScreenPages.includes(currentPageName);
     
   return (
@@ -671,19 +662,11 @@ function AppLayout({ children, currentPageName }) {
             >
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-20">
-                  {/* Logo - Enhanced with Glow */}
+                  {/* App Title */}
                   <Link 
                     to={createPageUrl("Landing")} 
                     className="flex items-center gap-3 group cursor-pointer"
                   >
-                    <div className="relative">
-                      {/* Glow Background */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity logo-glow" />
-                      {/* Logo Icon */}
-                      <div className="relative bg-gradient-to-br from-blue-600 to-cyan-600 p-2.5 rounded-xl">
-                        <BrainCircuit className="w-6 h-6 text-white" />
-                      </div>
-                    </div>
                     <div>
                       <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                         MindVaultIP
