@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import UnifiedWalletConnect from "@/components/wallet/UnifiedWalletConnect";
 import { safeApiCall } from "@/utils/apiErrorHandler";
 import { FEATURE_AI_MENTOR, FEATURE_MESSAGES, FEATURE_MARKETPLACE, FEATURE_EXPERT_DASHBOARD, FEATURE_ADMIN_PANEL } from "@/utils/featureFlags";
+import { getCurrentLocale, setLocale, getLanguageName, SUPPORTED_LOCALES } from "@/utils/i18nConfig";
 
 // Updated Lucide React imports
 import { Home, LayoutDashboard, User, Bot, ShoppingCart, MessageSquare, List, Compass, BookOpen, Shield, Banknote, UserCog, MoreHorizontal, Languages, Coins, PlusCircle, Menu, X } from "lucide-react";
@@ -419,30 +420,16 @@ const translations = {
   },
 };
 
-const languages = [
-    { code: 'en', name: 'English' },
-    { code: 'fa', name: 'فارسی' },
-    { code: 'zh', name: '中文' },
-    { code: 'hi', name: 'हिन्दी' },
-    { code: 'es', name: 'Español' },
-    { code: 'fr', name: 'Français' },
-    { code: 'ar', name: 'العربية' },
-    { code: 'de', name: 'Deutsch' },
-    { code: 'ur', name: 'اردو' },
-    { code: 'ru', name: 'Русский' },
-    { code: 'ja', name: '日本語' },
-    { code: 'ko', name: '한국어' },
-    { code: 'sw', name: 'Kiswahili' },
-    { code: 'ha', name: 'Hausa' },
-    { code: 'yo', name: 'Yorùbá' },
-    { code: 'tr', name: 'Türkçe' },
-    { code: 'bal', name: 'بلوچی' },
-];
+    // Use centralized language configuration
+    const languages = SUPPORTED_LOCALES.map(code => ({
+        code,
+        name: getLanguageName(code)
+    }));
 
 function AppLayout({ children, currentPageName }) {
   const location = useLocation();
   const [userRole, setUserRole] = useState('user');
-  const [language, setLanguage] = useState(localStorage.getItem('lang') || 'en');
+  const [language, setLanguage] = useState(getCurrentLocale());
   const [headerHeight, setHeaderHeight] = useState(80);
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -500,15 +487,19 @@ function AppLayout({ children, currentPageName }) {
     }
   }, []); 
   
+  // Listen for language changes from other components
   useEffect(() => {
-    document.documentElement.lang = language;
-    const isRTL = ['fa', 'ar', 'ur', 'bal'].includes(language);
-    document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
-    localStorage.setItem('lang', language);
-    window.dispatchEvent(new Event('languageChange'));
-  }, [language]);
+    const handleLanguageChange = () => {
+      setLanguage(getCurrentLocale());
+    };
+    
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
 
   const toggleLanguage = (lang) => {
+    // Use centralized language setting
+    setLocale(lang);
     setLanguage(lang);
   };
   

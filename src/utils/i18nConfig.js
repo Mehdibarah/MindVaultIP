@@ -69,7 +69,8 @@ export const LANGUAGE_DIRECTIONS = {
 };
 
 /**
- * Get current locale from localStorage or browser
+ * Get current locale from localStorage or default to English
+ * COMPLETELY IGNORES browser language detection
  * @returns {string} Current locale
  */
 export function getCurrentLocale() {
@@ -77,26 +78,14 @@ export function getCurrentLocale() {
     return DEFAULT_LOCALE;
   }
   
-  // Check localStorage first
+  // ONLY check localStorage - completely ignore browser language
   const savedLocale = localStorage.getItem('lang');
   if (savedLocale && SUPPORTED_LOCALES.includes(savedLocale)) {
     return savedLocale;
   }
   
-  // Check browser language
-  const browserLang = navigator.language.split('-')[0];
-  if (SUPPORTED_LOCALES.includes(browserLang)) {
-    return browserLang;
-  }
-  
-  // Check browser languages array
-  for (const lang of navigator.languages) {
-    const langCode = lang.split('-')[0];
-    if (SUPPORTED_LOCALES.includes(langCode)) {
-      return langCode;
-    }
-  }
-  
+  // ALWAYS default to English for new users
+  // NO browser language detection whatsoever
   return DEFAULT_LOCALE;
 }
 
@@ -139,15 +128,76 @@ export function getLanguageName(locale) {
 }
 
 /**
+ * Clear any existing language settings and force English
+ */
+export function forceEnglishDefault() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  
+  // Clear any existing language settings
+  localStorage.removeItem('lang');
+  sessionStorage.removeItem('lang');
+  
+  // Force English
+  localStorage.setItem('lang', DEFAULT_LOCALE);
+  
+  // Update DOM immediately
+  document.documentElement.lang = DEFAULT_LOCALE;
+  document.documentElement.dir = 'ltr';
+  
+  console.log('🌐 Forced English as default language');
+}
+
+/**
+ * Debug function to check language sources
+ */
+export function debugLanguageSources() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  
+  console.log('🔍 Language Debug Info:');
+  console.log('- localStorage lang:', localStorage.getItem('lang'));
+  console.log('- sessionStorage lang:', sessionStorage.getItem('lang'));
+  console.log('- navigator.language:', navigator.language);
+  console.log('- navigator.languages:', navigator.languages);
+  console.log('- document.documentElement.lang:', document.documentElement.lang);
+  console.log('- document.documentElement.dir:', document.documentElement.dir);
+  console.log('- DEFAULT_LOCALE:', DEFAULT_LOCALE);
+}
+
+/**
  * Initialize i18n on app startup
+ * FORCES English as the default language for new users
  */
 export function initializeI18n() {
   if (typeof window === 'undefined') {
     return;
   }
   
-  const currentLocale = getCurrentLocale();
+  // Debug language sources
+  debugLanguageSources();
+  
+  // FORCE English as default for new users - ignore any browser language detection
+  const savedLocale = localStorage.getItem('lang');
+  let currentLocale;
+  
+  if (savedLocale && SUPPORTED_LOCALES.includes(savedLocale)) {
+    // User has explicitly set a language, use it
+    currentLocale = savedLocale;
+    console.log(`🌐 Using saved language: ${currentLocale}`);
+  } else {
+    // New user - FORCE English regardless of browser language
+    currentLocale = DEFAULT_LOCALE;
+    localStorage.setItem('lang', DEFAULT_LOCALE);
+    console.log(`🌐 Forcing English default: ${currentLocale}`);
+  }
+  
+  // Set the locale and update DOM
   setLocale(currentLocale);
+  
+  console.log(`🌐 Language initialized: ${currentLocale} (${getLanguageName(currentLocale)}) - Browser language ignored`);
 }
 
 export default {

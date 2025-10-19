@@ -9,6 +9,7 @@ import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import UploadProgress from '../components/create/UploadProgress';
+import { useWallet } from '@/components/wallet/WalletContext';
 
 // Helper for SHA-256 Hashing
 async function getFileHash(file) {
@@ -40,32 +41,11 @@ export default function CreateProof() {
     const [dragActive, setDragActive] = useState(false);
     const fileInputRef = useRef(null);
     
-    // Wallet connection state
-    const [isConnected, setIsConnected] = useState(false); 
+    // Use global wallet context
+    const { address, isConnected, connect, shortAddress } = useWallet();
 
-    useEffect(() => {
-        const checkConnection = async () => {
-            try {
-                // Check if wallet is connected by checking localStorage or window.ethereum
-                if (typeof window.ethereum !== 'undefined') {
-                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                    setIsConnected(accounts.length > 0);
-                } else {
-                    setIsConnected(false);
-                }
-            } catch {
-                setIsConnected(false);
-            }
-        };
-        checkConnection();
-        
-        // Listen for wallet connection changes
-        if (window.ethereum) {
-            window.ethereum.on('accountsChanged', (accounts) => {
-                setIsConnected(accounts.length > 0);
-            });
-        }
-    }, []);
+    // Wallet connection is now handled by the global WalletContext
+    // No need for local wallet state management
 
     const t = {
         pageTitle: 'Register Your Innovation',
@@ -220,11 +200,17 @@ export default function CreateProof() {
                     </div>
                     <h2 className="text-3xl font-bold text-white mb-2">{t.connectPromptTitle}</h2>
                     <p className="text-gray-400 mb-6">{t.connectPromptSubtitle}</p>
-                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
                         <p className="text-sm text-blue-300">
                             👆 Look for the "Connect Wallet" button in the header above
                         </p>
                     </div>
+                    <Button 
+                        onClick={connect}
+                        className="w-full glow-button"
+                    >
+                        Connect Wallet
+                    </Button>
                 </motion.div>
             </div>
         );

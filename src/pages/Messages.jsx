@@ -1,479 +1,236 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useWallet } from '@/components/wallet/WalletContext';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
-import { 
-  MessageSquare, 
-  Send, 
-  User, 
-  Search, 
-  ArrowLeft,
-  Clock,
-  Check,
-  CheckCheck
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  getConversationId, 
-  isValidAddress, 
-  normalizeAddress, 
-  areAddressesEqual,
-  formatAddress,
-  validateMessage 
-} from '@/utils/conversationUtils';
-import { sendMessage, getMessages, getConversations } from '@/api/messages';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { MessageSquare, Send, User, Clock, Search, Plus } from 'lucide-react';
 
 const Messages = () => {
-  const { address, isConnected } = useWallet();
-  const { open } = useWeb3Modal();
-  
-  // State management
-  const [recipientAddress, setRecipientAddress] = useState('');
-  const [currentConversationId, setCurrentConversationId] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [isLoading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [conversations, setConversations] = useState([]);
-  const [showConversations, setShowConversations] = useState(true);
-  const [isSending, setIsSending] = useState(false);
-  
-  // Refs
-  const messagesEndRef = useRef(null);
-  const messageInputRef = useRef(null);
-  
-  // Auto-scroll to bottom when new messages arrive
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-  
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-  
-  // Load conversations when wallet connects
-  useEffect(() => {
-    if (isConnected && address) {
-      loadConversations();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Mock message threads data
+  const messageThreads = [
+    {
+      id: 1,
+      name: "Alex Chen",
+      lastMessage: "Thanks for the feedback on my patent application!",
+      timestamp: "2 hours ago",
+      unread: true,
+      avatar: null
+    },
+    {
+      id: 2,
+      name: "Sarah Johnson",
+      lastMessage: "The marketplace listing looks great. Ready to proceed?",
+      timestamp: "1 day ago",
+      unread: false,
+      avatar: null
+    },
+    {
+      id: 3,
+      name: "Dr. Michael Rodriguez",
+      lastMessage: "I've reviewed your invention proposal. Very impressive work.",
+      timestamp: "3 days ago",
+      unread: true,
+      avatar: null
+    },
+    {
+      id: 4,
+      name: "Emma Wilson",
+      lastMessage: "Let's schedule a call to discuss the collaboration.",
+      timestamp: "1 week ago",
+      unread: false,
+      avatar: null
     }
-  }, [isConnected, address]);
-  
-  // Poll for new messages every 2 seconds
-  useEffect(() => {
-    if (currentConversationId && isConnected) {
-      const interval = setInterval(() => {
-        loadMessages(currentConversationId);
-      }, 2000);
-      
-      return () => clearInterval(interval);
-    }
-  }, [currentConversationId, isConnected]);
-  
-  const loadConversations = async () => {
-    if (!address) return;
-    
-    setLoading(true);
-    try {
-      const response = await getConversations(address);
-      if (response.success) {
-        setConversations(response.conversations || []);
-      } else {
-        setError(response.error || 'Failed to load conversations');
-      }
-    } catch (err) {
-      setError('Failed to load conversations');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const loadMessages = async (convoId) => {
-    if (!convoId) return;
-    
-    try {
-      const response = await getMessages({ convoId });
-      if (response.success) {
-        setMessages(response.messages || []);
-      }
-    } catch (err) {
-      console.error('Failed to load messages:', err);
-    }
-  };
-  
-  const startConversation = async () => {
-    if (!address || !recipientAddress.trim()) return;
-    
-    setError('');
-    setLoading(true);
-    
-    try {
-      // Validate recipient address
-      if (!isValidAddress(recipientAddress.trim())) {
-        setError('Invalid wallet address');
-        setLoading(false);
-        return;
-      }
-      
-      const normalizedRecipient = normalizeAddress(recipientAddress.trim());
-      if (!normalizedRecipient) {
-        setError('Invalid wallet address');
-        setLoading(false);
-        return;
-      }
-      
-      // Check if trying to message self
-      if (areAddressesEqual(address, normalizedRecipient)) {
-        setError('Cannot message yourself');
-        setLoading(false);
-        return;
-      }
-      
-      // Generate conversation ID
-      const convoId = getConversationId(address, normalizedRecipient);
-      setCurrentConversationId(convoId);
-      setShowConversations(false);
-      
-      // Load existing messages
-      await loadMessages(convoId);
-      
-      // Clear recipient input
-      setRecipientAddress('');
-      
-    } catch (err) {
-      setError('Failed to start conversation');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const sendNewMessage = async () => {
-    if (!newMessage.trim() || !currentConversationId || !address || isSending) return;
-    
-    // Validate message
-    const validation = validateMessage(newMessage);
-    if (!validation.isValid) {
-      setError(validation.error);
-      return;
-    }
-    
-    setIsSending(true);
-    setError('');
-    
-    try {
-      // Get recipient from current conversation
-      const otherParticipant = messages.find(msg => msg.sender !== address)?.sender || 
-                              conversations.find(conv => conv.convoId === currentConversationId)?.otherParticipant;
-      
-      if (!otherParticipant) {
-        setError('Could not determine recipient');
-        setIsSending(false);
-        return;
-      }
-      
-      const response = await sendMessage({
-        convoId: currentConversationId,
-        recipient: otherParticipant,
-        body: newMessage.trim()
-      }, address);
-      
-      if (response.success) {
-        setNewMessage('');
-        // Refresh messages
-        await loadMessages(currentConversationId);
-        // Refresh conversations
-        await loadConversations();
-      } else {
-        setError(response.error || 'Failed to send message');
-      }
-    } catch (err) {
-      setError('Failed to send message');
-    } finally {
-      setIsSending(false);
-    }
-  };
-  
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendNewMessage();
-    }
-  };
-  
-  const openConversation = (convoId) => {
-    setCurrentConversationId(convoId);
-    setShowConversations(false);
-    loadMessages(convoId);
-  };
-  
-  const backToConversations = () => {
-    setShowConversations(true);
-    setCurrentConversationId(null);
-    setMessages([]);
-    setError('');
-  };
-  
-  // Get other participant info for current conversation
-  const getOtherParticipant = () => {
-    if (!currentConversationId || !address) return null;
-    
-    const otherMessage = messages.find(msg => msg.sender !== address);
-    if (otherMessage) {
-      return otherMessage.sender;
-    }
-    
-    const conversation = conversations.find(conv => conv.convoId === currentConversationId);
-    return conversation?.otherParticipant || null;
-  };
-  
-  // Wallet not connected state
-  if (!isConnected) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-slate-800 border-slate-700">
-          <CardHeader className="text-center">
-            <MessageSquare className="w-16 h-16 mx-auto mb-4 text-blue-400" />
-            <CardTitle className="text-2xl text-white">Connect Your Wallet</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-gray-400 mb-6">
-              Connect your wallet to start private conversations with other users.
-            </p>
-            <Button 
-              onClick={open}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              Connect Wallet
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-  
+  ];
+
+  const filteredThreads = messageThreads.filter(thread =>
+    thread.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <div className="max-w-4xl mx-auto p-4">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-4 mb-4">
-            {!showConversations && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={backToConversations}
-                className="text-white hover:bg-slate-700"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-            )}
-            <h1 className="text-3xl font-bold text-white flex items-center gap-2">
-              <MessageSquare className="w-8 h-8 text-blue-400" />
+    <div className="min-h-screen bg-[#0B1220] text-white">
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-green-900/20 to-blue-900/20 border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center"
+          >
+            <div className="flex justify-center mb-6">
+              <div className="p-4 bg-gradient-to-r from-green-500 to-blue-600 rounded-2xl">
+                <MessageSquare className="w-12 h-12 text-white" />
+              </div>
+            </div>
+            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent mb-4">
               Messages
             </h1>
-          </div>
-          
-          {showConversations && (
-            <div className="flex gap-2">
-              <Input
-                placeholder="Enter wallet address or ENS..."
-                value={recipientAddress}
-                onChange={(e) => setRecipientAddress(e.target.value)}
-                className="flex-1 bg-slate-800 border-slate-600 text-white"
-                onKeyPress={(e) => e.key === 'Enter' && startConversation()}
-              />
-              <Button
-                onClick={startConversation}
-                disabled={!recipientAddress.trim() || isLoading}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                {isLoading ? 'Starting...' : 'Start Chat'}
-              </Button>
-            </div>
-          )}
-        </div>
-        
-        {/* Error Display */}
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400"
-          >
-            {error}
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+              Here you can view and send messages. Connect with other innovators, experts, and collaborators in the MindVaultIP community.
+            </p>
           </motion.div>
-        )}
-        
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
-          {/* Conversations List */}
-          <AnimatePresence>
-            {showConversations && (
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="lg:col-span-1"
-              >
-                <Card className="h-full bg-slate-800 border-slate-700">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <Search className="w-5 h-5" />
-                      Conversations
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="max-h-[calc(100vh-300px)] overflow-y-auto">
-                      {isLoading ? (
-                        <div className="p-4 text-center text-gray-400">
-                          Loading conversations...
-                        </div>
-                      ) : conversations.length === 0 ? (
-                        <div className="p-4 text-center text-gray-400">
-                          No conversations yet. Start a chat with someone!
-                        </div>
-                      ) : (
-                        conversations.map((conversation) => (
-                          <motion.div
-                            key={conversation.convoId}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="p-4 border-b border-slate-700 hover:bg-slate-700/50 cursor-pointer transition-colors"
-                            onClick={() => openConversation(conversation.convoId)}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                                <User className="w-5 h-5 text-white" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-white font-medium truncate">
-                                  {formatAddress(conversation.otherParticipant)}
-                                </p>
-                                {conversation.lastMessage && (
-                                  <p className="text-gray-400 text-sm truncate">
-                                    {conversation.lastMessage.body}
-                                  </p>
-                                )}
-                                {conversation.lastMessage && (
-                                  <p className="text-gray-500 text-xs mt-1">
-                                    {new Date(conversation.lastMessage.createdAt).toLocaleTimeString()}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          {/* Chat Area */}
-          <div className={`${showConversations ? 'lg:col-span-2' : 'col-span-full'}`}>
-            <Card className="h-full bg-slate-800 border-slate-700 flex flex-col">
-              {currentConversationId ? (
-                <>
-                  {/* Chat Header */}
-                  <CardHeader className="border-b border-slate-700">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-white">
-                          {formatAddress(getOtherParticipant() || '')}
-                        </CardTitle>
-                        <p className="text-gray-400 text-sm">Online</p>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  
-                  {/* Messages */}
-                  <CardContent className="flex-1 overflow-y-auto p-4">
-                    <div className="space-y-4">
-                      {messages.length === 0 ? (
-                        <div className="text-center text-gray-400 py-8">
-                          No messages yet. Start the conversation!
-                        </div>
-                      ) : (
-                        messages.map((message) => (
-                          <motion.div
-                            key={message.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className={`flex ${message.sender === address ? 'justify-end' : 'justify-start'}`}
-                          >
-                            <div className={`max-w-[70%] ${message.sender === address ? 'order-2' : 'order-1'}`}>
-                              <div className={`rounded-lg p-3 ${
-                                message.sender === address
-                                  ? 'bg-blue-600 text-white'
-                                  : 'bg-slate-700 text-slate-200'
-                              }`}>
-                                <p className="text-sm leading-relaxed">{message.body}</p>
-                                <div className={`flex items-center gap-1 mt-2 text-xs ${
-                                  message.sender === address ? 'text-blue-100' : 'text-gray-400'
-                                }`}>
-                                  <Clock className="w-3 h-3" />
-                                  {new Date(message.createdAt).toLocaleTimeString()}
-                                  {message.sender === address && (
-                                    <CheckCheck className="w-3 h-3 ml-1" />
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))
-                      )}
-                      <div ref={messagesEndRef} />
-                    </div>
-                  </CardContent>
-                  
-                  {/* Message Composer */}
-                  <div className="border-t border-slate-700 p-4">
-                    <div className="flex gap-2">
-                      <Textarea
-                        ref={messageInputRef}
-                        placeholder="Type your message..."
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        className="flex-1 bg-slate-700 border-slate-600 text-white resize-none"
-                        rows={1}
-                        disabled={isSending}
-                      />
-                      <Button
-                        onClick={sendNewMessage}
-                        disabled={!newMessage.trim() || isSending}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4"
-                      >
-                        {isSending ? (
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Message Threads Sidebar */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="lg:col-span-1"
+          >
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+              {/* Search and New Message */}
+              <div className="flex gap-3 mb-6">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search conversations..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <button className="px-4 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg hover:from-green-600 hover:to-blue-700 transition-all duration-300">
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Message Threads List */}
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-white mb-4">Recent Conversations</h3>
+                {filteredThreads.map((thread) => (
+                  <motion.div
+                    key={thread.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className={`p-4 rounded-lg cursor-pointer transition-all duration-300 ${
+                      thread.unread 
+                        ? 'bg-blue-500/20 border border-blue-500/30' 
+                        : 'bg-gray-700/30 hover:bg-gray-700/50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                        {thread.avatar ? (
+                          <img src={thread.avatar} alt={thread.name} className="w-10 h-10 rounded-full" />
                         ) : (
-                          <Send className="w-4 h-4" />
+                          <User className="w-5 h-5 text-white" />
                         )}
-                      </Button>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <h4 className="text-sm font-semibold text-white truncate">{thread.name}</h4>
+                          <span className="text-xs text-gray-400 flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {thread.timestamp}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-300 truncate">{thread.lastMessage}</p>
+                        {thread.unread && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Press Enter to send, Shift+Enter for new line
-                    </p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Message Content Area */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="lg:col-span-2"
+          >
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 h-[600px] flex flex-col">
+              {/* Chat Header */}
+              <div className="p-6 border-b border-gray-700">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-white" />
                   </div>
-                </>
-              ) : (
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="text-center text-gray-400">
-                    <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-lg">Select a conversation or start a new chat</p>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">Select a conversation</h3>
+                    <p className="text-sm text-gray-400">Choose a conversation from the sidebar to start messaging</p>
                   </div>
                 </div>
-              )}
-            </Card>
-          </div>
+              </div>
+
+              {/* Chat Messages Area */}
+              <div className="flex-1 p-6 flex items-center justify-center">
+                <div className="text-center">
+                  <MessageSquare className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-400 mb-2">No conversation selected</h3>
+                  <p className="text-gray-500">
+                    Select a conversation from the sidebar to view and send messages.
+                  </p>
+                </div>
+              </div>
+
+              {/* Message Input */}
+              <div className="p-6 border-t border-gray-700">
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    placeholder="Type your message..."
+                    disabled
+                    className="flex-1 px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                  />
+                  <button
+                    disabled
+                    className="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg hover:from-green-600 hover:to-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Features Section */}
+      <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 border-t border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="text-center"
+          >
+            <h2 className="text-3xl font-bold text-white mb-4">Coming Soon</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto mb-8">
+              We're building a comprehensive messaging system that will allow you to communicate securely 
+              with other users, share files, and collaborate on intellectual property projects.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700">
+                <h3 className="text-lg font-semibold text-white mb-2">Secure Messaging</h3>
+                <p className="text-gray-400 text-sm">
+                  End-to-end encryption ensures your conversations remain private and secure.
+                </p>
+              </div>
+              <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700">
+                <h3 className="text-lg font-semibold text-white mb-2">File Sharing</h3>
+                <p className="text-gray-400 text-sm">
+                  Share documents, images, and other files directly within your conversations.
+                </p>
+              </div>
+              <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700">
+                <h3 className="text-lg font-semibold text-white mb-2">Real-time Chat</h3>
+                <p className="text-gray-400 text-sm">
+                  Instant messaging with real-time notifications and message status indicators.
+                </p>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>

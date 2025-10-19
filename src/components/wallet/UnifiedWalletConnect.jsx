@@ -4,6 +4,7 @@ import { useAccount, useBalance, useSwitchChain, useDisconnect } from 'wagmi'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
 import { base } from '@/lib/wagmi'
 import { useNavigate } from 'react-router-dom';
+import { useWallet } from './WalletContext';
 
 // Custom hook for SSR hydration guard
 function useIsMounted() {
@@ -41,7 +42,17 @@ export default function UnifiedWalletConnect() {
   const { open } = useWeb3Modal()
   const navigate = useNavigate()
   
+  // Use enhanced wallet context for better connection handling
+  const { 
+    connect, 
+    disconnect: walletDisconnect, 
+    shortAddress, 
+    isConnecting, 
+    connectionError 
+  } = useWallet()
+  
   const [showMenu, setShowMenu] = useState(false);
+  const [showError, setShowError] = useState(false);
   const menuRef = useRef(null);
 
   // Handle clicks outside menu - must be called consistently
@@ -57,6 +68,15 @@ export default function UnifiedWalletConnect() {
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showMenu]);
+
+  // Show connection errors
+  useEffect(() => {
+    if (connectionError) {
+      setShowError(true);
+      const timer = setTimeout(() => setShowError(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [connectionError]);
 
   // Return null until mounted to prevent hydration mismatch
   if (!mounted) {
@@ -89,11 +109,11 @@ export default function UnifiedWalletConnect() {
   };
 
   // ==========================================
-  // اتصال با MetaMask
+  // اتصال با MetaMask - Now using enhanced context
   // ==========================================
   const connectMetaMask = async () => {
     try {
-      open();
+      await connect();
     } catch (err) {
       console.error("Connection error:", err);
     }
@@ -102,20 +122,16 @@ export default function UnifiedWalletConnect() {
   // ==========================================
   // قطع اتصال
   // ==========================================
-  const disconnect = async () => {
+  const handleDisconnect = async () => {
     try {
-      // Disconnect from wagmi
-      await wagmiDisconnect();
+      // Use the enhanced wallet context disconnect
+      await walletDisconnect();
       
       // Close the menu
       setShowMenu(false);
       
       // Redirect to landing page
       navigate('/');
-      
-      // Clear any local storage or session data if needed
-      localStorage.removeItem('walletConnected');
-      sessionStorage.clear();
       
     } catch (err) {
       console.error("Disconnect error:", err);
@@ -143,25 +159,42 @@ export default function UnifiedWalletConnect() {
   // ==========================================
   // UI - اگر متصل نیست
   // ==========================================
-  if (!isConnected || !address) {
-    return (
-      <div className="relative flex flex-row gap-2 items-center">
-        {/* دکمه MetaMask */}
-        <button
-          onClick={connectMetaMask}
-          className="w-10 h-10 md:w-auto md:px-3 group relative py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-xs rounded-lg shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shrink-0 grow-0 basis-auto"
-        >
-          <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 40 40" fill="none">
-            <path d="M32.9582 1L20 13.125L22.9167 6.875L32.9582 1Z" fill="white"/>
-            <path d="M7.04176 1L19.8749 13.2083L17.0832 6.875L7.04176 1Z" fill="white"/>
-            <path d="M28.2917 27.7917L25.0417 33.3333L32.3333 35.4167L34.5 28.0417L28.2917 27.7917Z" fill="white"/>
-            <path d="M5.5 28.0417L7.66667 35.4167L15 33.3333L11.7083 27.7917L5.5 28.0417Z" fill="white"/>
-          </svg>
-          <span className="hidden md:inline truncate">Connect Wallet</span>
-        </button>
-      </div>
-    );
-  }
+      if (!isConnected || !address) {
+        return (
+          <div className="relative flex flex-row gap-2 items-center">
+            {/* Connection Error Toast */}
+            {showError && connectionError && (
+              <div className="absolute -top-16 left-0 right-0 bg-red-500/90 text-white text-xs px-3 py-2 rounded-lg shadow-lg z-50">
+                {connectionError}
+              </div>
+            )}
+            
+            {/* دکمه MetaMask */}
+            <button
+              onClick={connectMetaMask}
+              disabled={isConnecting}
+              className="w-10 h-10 md:w-auto md:px-3 group relative py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-xs rounded-lg shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shrink-0 grow-0 basis-auto"
+            >
+              {isConnecting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin flex-shrink-0" />
+                  <span className="hidden md:inline truncate">Connecting...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 40 40" fill="none">
+                    <path d="M32.9582 1L20 13.125L22.9167 6.875L32.9582 1Z" fill="white"/>
+                    <path d="M7.04176 1L19.8749 13.2083L17.0832 6.875L7.04176 1Z" fill="white"/>
+                    <path d="M28.2917 27.7917L25.0417 33.3333L32.3333 35.4167L34.5 28.0417L28.2917 27.7917Z" fill="white"/>
+                    <path d="M5.5 28.0417L7.66667 35.4167L15 33.3333L11.7083 27.7917L5.5 28.0417Z" fill="white"/>
+                  </svg>
+                  <span className="hidden md:inline truncate">Connect Wallet</span>
+                </>
+              )}
+            </button>
+          </div>
+        );
+      }
 
   // ==========================================
   // UI - اگر متصل است
@@ -257,10 +290,10 @@ export default function UnifiedWalletConnect() {
                 View on BaseScan
               </button>
               
-              <button
-                onClick={disconnect}
-                className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-3"
-              >
+                  <button
+                    onClick={handleDisconnect}
+                    className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-3"
+                  >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
