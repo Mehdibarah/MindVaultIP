@@ -5,6 +5,7 @@ import { useWeb3Modal } from '@web3modal/wagmi/react'
 import { base } from '@/lib/wagmi'
 import { useNavigate } from 'react-router-dom';
 import { useWallet } from './WalletContext';
+import { useMindVaultIPContract } from '@/hooks/useContract';
 
 // Custom hook for SSR hydration guard
 function useIsMounted() {
@@ -48,8 +49,11 @@ export default function UnifiedWalletConnect() {
     disconnect: walletDisconnect, 
     shortAddress, 
     isConnecting, 
-    connectionError 
+    connectionError
   } = useWallet()
+
+  // Get token balance from MindVaultIP contract
+  const { balance: tokenBalance, formatTokenAmount } = useMindVaultIPContract()
   
   const [showMenu, setShowMenu] = useState(false);
   const [showError, setShowError] = useState(false);
@@ -259,19 +263,23 @@ export default function UnifiedWalletConnect() {
             </div>
           </div>
 
-          {/* Balance & Network */}
-          <div className="px-4 py-3 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-400">Balance</span>
-              <span className="text-sm font-semibold text-white">{formatBalance(balance)} ETH</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-400">Network</span>
-              <span className={`text-sm font-semibold ${isWrongNetwork ? 'text-yellow-400' : 'text-emerald-400'}`}>
-                {chainId === base.id ? "Base Mainnet" : `Chain ${chainId}`}
-              </span>
-            </div>
-          </div>
+              {/* Balance & Network */}
+              <div className="px-4 py-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-400">ETH Balance</span>
+                  <span className="text-sm font-semibold text-white">{formatBalance(balance)} ETH</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-400">IDN Tokens</span>
+                  <span className="text-sm font-semibold text-blue-400">{formatTokenAmount(tokenBalance)} IDN</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-400">Network</span>
+                  <span className={`text-sm font-semibold ${isWrongNetwork ? 'text-yellow-400' : 'text-emerald-400'}`}>
+                    {chainId === base.id ? "Base Mainnet" : `Chain ${chainId}`}
+                  </span>
+                </div>
+              </div>
 
           <div className="border-t border-gray-700" />
 

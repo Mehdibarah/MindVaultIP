@@ -36,6 +36,8 @@ import Profile from "./Profile";
 
 import Signup from "./Signup";
 
+import ContractDemo from "./ContractDemo";
+
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import { FEATURE_AI_MENTOR, FEATURE_MESSAGES, FEATURE_MARKETPLACE, FEATURE_EXPERT_DASHBOARD, FEATURE_ADMIN_PANEL } from "@/utils/featureFlags";
 import { FeatureGuard } from "@/components/common/FeatureGuard";
@@ -77,6 +79,8 @@ const PAGES = {
     Profile: Profile,
     
     Signup: Signup,
+    
+    ContractDemo: ContractDemo,
     
 }
 
@@ -160,6 +164,8 @@ function PagesContent() {
                 <Route path="/Profile" element={<Profile />} />
                 
                 <Route path="/Signup" element={<Signup />} />
+                
+                <Route path="/ContractDemo" element={<ContractDemo />} />
                 
             </Routes>
         </Layout>
