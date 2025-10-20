@@ -21,6 +21,8 @@ import DemoVideoManager from '../components/user/DemoVideoManager';
 import ReportProofButton from '../components/moderation/ReportProofButton';
 const CommentSection = React.lazy(() => import('../components/comments/CommentSection'));
 import { base44 } from '@/api/base44Client';
+import { safeApiCall } from '@/utils/apiErrorHandler';
+import { safeBase44Call } from '@/utils/base44ErrorHandler';
 
 
 const translations = {
@@ -107,7 +109,7 @@ export default function PublicProof() {
         const loadData = async () => {
             setIsLoading(true);
             try {
-                const proofData = await base44.entities.Proof.get(proofId);
+                const proofData = await safeBase44Call(() => base44.entities.Proof.get(proofId), null);
                 
                 if (!proofData) {
                     setError(t.proofNotFound);
@@ -129,7 +131,7 @@ export default function PublicProof() {
                 
                 // Fetch owner data based on created_by email if wallet address is not available/reliable
                 if (proofData.created_by) {
-                    const users = await base44.entities.User.filter({ email: proofData.created_by });
+                    const users = await safeBase44Call(() => base44.entities.User.filter({ email: proofData.created_by }), []);
                     const ownerData = users[0];
                     setOwner(ownerData || { full_name: t.unknownUser });
                 }

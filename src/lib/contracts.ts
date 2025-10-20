@@ -18,6 +18,13 @@ export const NETWORK_CONFIG = {
   NETWORK: import.meta.env.VITE_NETWORK || 'base',
 } as const
 
+// Registration fee configuration
+export const REGISTRATION_FEE = {
+  AMOUNT: '0.001', // 0.001 ETH
+  AMOUNT_WEI: '1000000000000000', // 0.001 ETH in wei
+  CURRENCY: 'ETH',
+} as const
+
 // Contract configuration for wagmi
 export const contractConfig = {
   address: CONTRACT_ADDRESSES.MIND_VAULT_IP_CORE,

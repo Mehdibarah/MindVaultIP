@@ -10,6 +10,9 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import UploadProgress from '../components/create/UploadProgress';
 import { useWallet } from '@/components/wallet/WalletContext';
+import RegistrationFeePayment from '@/components/contract/RegistrationFeePayment';
+import { safeApiCall } from '@/utils/apiErrorHandler';
+import { safeBase44Call } from '@/utils/base44ErrorHandler';
 
 // Helper for SHA-256 Hashing
 async function getFileHash(file) {
@@ -31,11 +34,12 @@ export default function CreateProof() {
     const [isPublic, setIsPublic] = useState(true);
 
     // Process State
-    const [status, setStatus] = useState('idle'); // idle, uploading, success, error
+    const [status, setStatus] = useState('idle'); // idle, payment, uploading, success, error
     const [step, setStep] = useState(0);
     const [error, setError] = useState('');
     const [createdProof, setCreatedProof] = useState(null);
     const [fileHash, setFileHash] = useState('');
+    const [paymentHash, setPaymentHash] = useState('');
     
     // UI State
     const [dragActive, setDragActive] = useState(false);
@@ -72,7 +76,7 @@ export default function CreateProof() {
         publicLabel: 'Make publicly visible in marketplace',
         publicHint: 'Private innovations are still registered but not shown in gallery.',
         costLabel: 'Registration Fee',
-        costAmount: '0.0004 ETH',
+    costAmount: '0.001 ETH',
         costFiat: '≈ £1.00',
         submitButton: 'Register on Platform',
         submittingButton: 'Registering...',
@@ -140,49 +144,86 @@ export default function CreateProof() {
         setError('');
         setCreatedProof(null);
         setFileHash('');
+        setPaymentHash('');
+    };
+
+    // Payment handlers
+    const handlePaymentSuccess = (hash) => {
+        setPaymentHash(hash);
+        setStatus('uploading');
+        setStep(1);
+        // Proceed with registration after payment
+        proceedWithRegistration();
+    };
+
+    const handlePaymentError = (errorMessage) => {
+        setError(errorMessage);
+        setStatus('error');
+    };
+
+    const proceedWithRegistration = async () => {
+        try {
+            // Step 2: Upload to IPFS
+            setStep(2);
+            const ipfsResult = await safeBase44Call(async () => {
+                const fileContent = await file.arrayBuffer();
+                return base44.proofs.uploadToIpfs({
+                    file_hash: fileHash,
+                    file_name: file.name,
+                    file_size: file.size,
+                    file_type: file.type,
+                    file_content: Array.from(new Uint8Array(fileContent)),
+                });
+            }, null);
+
+            if (!ipfsResult || !ipfsResult.ipfs_hash) {
+                throw new Error(t.ipfsUploadError || 'Failed to upload to IPFS.');
+            }
+
+            // Step 3: Register Proof
+            setStep(3);
+            const proofData = {
+                title,
+                category,
+                description,
+                file_hash: fileHash,
+                ipfs_hash: ipfsResult.ipfs_hash,
+                is_public: isPublic,
+                payment_hash: paymentHash, // Include payment hash
+            };
+            const registrationResult = await safeBase44Call(() => base44.proofs.registerProof(proofData), null);
+
+            if (!registrationResult || !registrationResult.id) {
+                throw new Error(t.proofRegistrationError || 'Failed to register proof.');
+            }
+
+            // Step 4: AI Review (initial stage)
+            setStep(4);
+            setCreatedProof(registrationResult);
+            setStatus('success');
+        } catch (err) {
+            console.error("Registration error:", err);
+            setError(err.message || t.registrationGenericError || 'An unexpected error occurred during registration.');
+            setStatus('error');
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!file || !title || !category || !fileHash) {
-            alert('Please fill all required fields and ensure file is processed.');
+        setError('');
+        
+        if (!isConnected) {
+            setError(t.connectPromptTitle);
             return;
         }
 
-        setStatus('uploading');
-        setError('');
-        
-        try {
-            setStep(1); // Preparing
-            setStep(2); // Uploading
-            const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file });
-            if (!file_uri) throw new Error("File upload failed to return a URI.");
-
-            setStep(3); // Creating Record
-            const proofData = {
-                title,
-                description,
-                category,
-                file_name: file.name,
-                file_hash: fileHash,
-                file_size: file.size,
-                file_type: file.type,
-                file_uri,
-                ipfs_cid: file_uri, 
-                is_public: isPublic,
-                blockchain_network: 'Base',
-                validation_status: 'pending_ai_review',
-            };
-            const newProof = await base44.entities.Proof.create(proofData);
-            
-            setStep(4); // Confirming
-            setCreatedProof(newProof);
-            setStatus('success');
-        } catch (err) {
-            console.error("Registration Error:", err);
-            setError(err.message || 'An unknown error occurred.');
-            setStatus('error');
+        if (!title || !category || !description || !file || !fileHash) {
+            setError(t.fillAllFieldsError || 'Please fill in all required fields and upload a file.');
+            return;
         }
+
+        // Move to payment step instead of direct registration
+        setStatus('payment');
     };
 
     if (!isConnected) {
@@ -216,6 +257,70 @@ export default function CreateProof() {
         );
     }
     
+    if (status === 'payment') {
+        return (
+            <div className="min-h-screen bg-[#0B1220] text-white p-4 sm:p-6 lg:p-8">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="max-w-2xl mx-auto"
+                >
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl sm:text-4xl font-bold mb-3 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                            {t.pageTitle}
+                        </h1>
+                        <p className="text-gray-400 text-lg">
+                            Complete your registration by paying the fee
+                        </p>
+                    </div>
+
+                    <div className="space-y-6">
+                        {/* Registration Summary */}
+                        <div className="bg-[#1a2332] rounded-2xl p-6 border border-gray-700">
+                            <h3 className="text-xl font-semibold text-white mb-4">Registration Summary</h3>
+                            <div className="space-y-3">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-400">Title:</span>
+                                    <span className="text-white">{title}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-400">Category:</span>
+                                    <span className="text-white">{category === 'invention' ? '💡 Invention' : '📄 Document'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-400">File:</span>
+                                    <span className="text-white">{file?.name}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-400">Visibility:</span>
+                                    <span className="text-white">{isPublic ? 'Public' : 'Private'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Payment Component */}
+                        <RegistrationFeePayment
+                            onPaymentSuccess={handlePaymentSuccess}
+                            onPaymentError={handlePaymentError}
+                        />
+
+                        {/* Back Button */}
+                        <div className="text-center">
+                            <Button
+                                onClick={() => setStatus('idle')}
+                                variant="outline"
+                                className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                            >
+                                ← Back to Form
+                            </Button>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+        );
+    }
+
     if (status === 'success' && createdProof) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-4">
@@ -223,11 +328,14 @@ export default function CreateProof() {
                     <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
                     <h2 className="text-3xl font-bold text-white mb-2">{t.successTitle}</h2>
                     <p className="text-gray-400 mb-6">{t.successSubtitle}</p>
-                    <div className="text-left bg-gray-900/50 rounded-lg p-4 space-y-2 mb-8">
-                        <p className="text-white"><strong>Title:</strong> {createdProof.title}</p>
-                        <p className="text-white"><strong>Proof ID:</strong> <code className="text-cyan-400">{createdProof.id}</code></p>
-                        <p className="text-white"><strong>File Hash (SHA-256):</strong> <code className="text-cyan-400 text-xs break-all">{createdProof.file_hash}</code></p>
-                    </div>
+                        <div className="text-left bg-gray-900/50 rounded-lg p-4 space-y-2 mb-8">
+                            <p className="text-white"><strong>Title:</strong> {createdProof.title}</p>
+                            <p className="text-white"><strong>Proof ID:</strong> <code className="text-cyan-400">{createdProof.id}</code></p>
+                            <p className="text-white"><strong>File Hash (SHA-256):</strong> <code className="text-cyan-400 text-xs break-all">{createdProof.file_hash}</code></p>
+                            {paymentHash && (
+                                <p className="text-white"><strong>Payment Hash:</strong> <code className="text-green-400 text-xs break-all">{paymentHash}</code></p>
+                            )}
+                        </div>
                     <div className="flex flex-col sm:flex-row gap-4">
                         <Link to={createPageUrl('Dashboard')} className="w-full">
                             <Button variant="outline" className="w-full">{t.goToDashboard}</Button>

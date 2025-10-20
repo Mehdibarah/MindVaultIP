@@ -1,7 +1,8 @@
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
-import { useAccount } from 'wagmi'
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useSendTransaction } from 'wagmi'
+import { useAccount, useBalance } from 'wagmi'
 import { parseEther, formatEther } from 'viem'
-import { contractConfig, paymentContractConfig, getContractAddress } from '@/lib/contracts'
+import { contractConfig, paymentContractConfig, getContractAddress, REGISTRATION_FEE } from '@/lib/contracts'
+import { useEthersContract } from './useEthersContract'
 
 // Hook for reading MindVaultIP Core contract
 export function useMindVaultIPContract() {
@@ -42,6 +43,12 @@ export function useMindVaultIPContract() {
     isLoading: balanceLoading || decimalsLoading,
     error: balanceError,
     getAllowance,
+    formatTokenAmount: (amount: string) => {
+      if (!amount || amount === '0') return '0'
+      const num = parseFloat(amount)
+      if (num < 0.0001) return '< 0.0001'
+      return num.toFixed(4)
+    }
   }
 }
 
@@ -84,6 +91,55 @@ export function usePaymentContract() {
   }
 }
 
+// Hook for ETH payments (registration fees)
+export function useETHPayment() {
+  const { address } = useAccount()
+  const { data: ethBalance } = useBalance({ address })
+  const { sendTransaction, data: hash, error, isPending } = useSendTransaction()
+  
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+  })
+
+  // Send ETH payment for registration
+  const payRegistrationFee = async () => {
+    try {
+      await sendTransaction({
+        to: getContractAddress('PAYMENT'),
+        value: BigInt(REGISTRATION_FEE.AMOUNT_WEI),
+      })
+    } catch (err) {
+      console.error('ETH payment error:', err)
+      throw err
+    }
+  }
+
+  // Check if user has sufficient ETH balance for registration
+  const hasSufficientETH = () => {
+    if (!ethBalance) return false
+    const required = parseEther(REGISTRATION_FEE.AMOUNT)
+    return ethBalance.value >= required
+  }
+
+  // Get formatted ETH balance
+  const getFormattedETHBalance = () => {
+    return ethBalance ? formatEther(ethBalance.value) : '0'
+  }
+
+  return {
+    payRegistrationFee,
+    hasSufficientETH,
+    getFormattedETHBalance,
+    ethBalance: ethBalance ? formatEther(ethBalance.value) : '0',
+    hash,
+    error,
+    isPending,
+    isConfirming,
+    isConfirmed,
+    registrationFee: REGISTRATION_FEE.AMOUNT,
+  }
+}
+
 // Hook for contract utilities
 export function useContractUtils() {
   const { address } = useAccount()
@@ -121,6 +177,56 @@ export function useContractUtils() {
     formatTokenAmount,
     isValidAddress,
     userAddress: address,
+  }
+}
+
+// Combined hook that provides both wagmi and ethers.js functionality
+export function useCombinedContract() {
+  const wagmiContract = useMindVaultIPContract()
+  const wagmiPayment = usePaymentContract()
+  const ethersContract = useEthersContract()
+
+  return {
+    // Wagmi functionality (preferred for most operations)
+    wagmi: {
+      balance: wagmiContract.balance,
+      balanceRaw: wagmiContract.balanceRaw,
+      decimals: wagmiContract.decimals,
+      isLoading: wagmiContract.isLoading,
+      error: wagmiContract.error,
+      getAllowance: wagmiContract.getAllowance,
+      formatTokenAmount: wagmiContract.formatTokenAmount,
+      transferToPayment: wagmiPayment.transferToPayment,
+      isPending: wagmiPayment.isPending,
+      hash: wagmiPayment.hash,
+    },
+    
+    // Ethers.js functionality (for direct contract interaction)
+    ethers: {
+      isConnected: ethersContract.isConnected,
+      account: ethersContract.account,
+      network: ethersContract.network,
+      isLoading: ethersContract.isLoading,
+      error: ethersContract.error,
+      contract: ethersContract.contract,
+      paymentContract: ethersContract.paymentContract,
+      connect: ethersContract.connect,
+      switchNetwork: ethersContract.switchNetwork,
+      getBalance: ethersContract.getBalance,
+      transfer: ethersContract.transfer,
+      sendPayment: ethersContract.sendPayment,
+      getTokenAllowance: ethersContract.getTokenAllowance,
+      isBaseNetwork: ethersContract.isBaseNetwork,
+      contractAddress: ethersContract.contractAddress,
+      paymentAddress: ethersContract.paymentAddress,
+      chainId: ethersContract.chainId,
+      clearError: ethersContract.clearError,
+    },
+    
+    // Utility functions
+    isConnected: wagmiContract.isLoading ? false : !!wagmiContract.balance || ethersContract.isConnected,
+    hasError: !!(wagmiContract.error || ethersContract.error),
+    getErrorMessage: () => wagmiContract.error?.message || ethersContract.error || null,
   }
 }
 

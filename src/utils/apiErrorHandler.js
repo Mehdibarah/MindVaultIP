@@ -5,7 +5,11 @@ export const handleApiError = (error, context = 'API call') => {
   // Don't throw errors for common API issues
   if (error?.message?.includes('500') || 
       error?.message?.includes('login-info') ||
-      error?.message?.includes('by-id/null')) {
+      error?.message?.includes('by-id/null') ||
+      error?.message?.includes('You must be logged in') ||
+      error?.message?.includes('Base44Error') ||
+      error?.message?.includes('authentication') ||
+      error?.message?.includes('unauthorized')) {
     return null; // Silently handle these errors
   }
   

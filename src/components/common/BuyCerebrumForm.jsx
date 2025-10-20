@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { safeApiCall } from '@/utils/apiErrorHandler';
+import { safeBase44Call } from '@/utils/base44ErrorHandler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -72,7 +74,7 @@ export default function BuyCerebrumForm({ stripePublishableKey }) {
     setIsLoading(true);
 
     try {
-      const { data, error: funcError } = await base44.functions.invoke('createCheckoutSession', { quantity });
+      const { data, error: funcError } = await safeBase44Call(() => base44.functions.invoke('createCheckoutSession', { quantity }), { data: null, error: null });
       
       if (funcError || !data || !data.sessionId) {
         throw new Error(funcError?.details || t.error);

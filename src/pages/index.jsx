@@ -37,6 +37,7 @@ import Profile from "./Profile";
 import Signup from "./Signup";
 
 import ContractDemo from "./ContractDemo";
+import EthersContractDemo from "./EthersContractDemo";
 
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import { FEATURE_AI_MENTOR, FEATURE_MESSAGES, FEATURE_MARKETPLACE, FEATURE_EXPERT_DASHBOARD, FEATURE_ADMIN_PANEL } from "@/utils/featureFlags";
@@ -81,6 +82,7 @@ const PAGES = {
     Signup: Signup,
     
     ContractDemo: ContractDemo,
+    EthersContractDemo: EthersContractDemo,
     
 }
 
@@ -166,6 +168,7 @@ function PagesContent() {
                 <Route path="/Signup" element={<Signup />} />
                 
                 <Route path="/ContractDemo" element={<ContractDemo />} />
+                <Route path="/EthersContractDemo" element={<EthersContractDemo />} />
                 
             </Routes>
         </Layout>

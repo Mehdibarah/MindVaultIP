@@ -16,6 +16,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import UnifiedWalletConnect from "@/components/wallet/UnifiedWalletConnect";
 import { safeApiCall } from "@/utils/apiErrorHandler";
+import { safeBase44Auth } from "@/utils/base44ErrorHandler";
 import { FEATURE_AI_MENTOR, FEATURE_MESSAGES, FEATURE_MARKETPLACE, FEATURE_EXPERT_DASHBOARD, FEATURE_ADMIN_PANEL } from "@/utils/featureFlags";
 import { getCurrentLocale, setLocale, getLanguageName, SUPPORTED_LOCALES } from "@/utils/i18nConfig";
 
@@ -472,12 +473,18 @@ function AppLayout({ children, currentPageName }) {
 
   useEffect(() => {
     const checkUser = async () => {
-      // Use safe API call to prevent errors from breaking the app
-      const user = await safeApiCall(() => base44.auth.me(), null);
-      if (user && user.role) {
-        setUserRole(user.role);
-      } else {
-        setUserRole('user');
+      try {
+        // Use safe API call to prevent errors from breaking the app
+        const user = await safeBase44Auth(() => base44.auth.me(), null);
+        if (user && user.role) {
+          setUserRole(user.role);
+        } else {
+          setUserRole('user');
+        }
+      } catch (error) {
+        // Handle authentication errors gracefully
+        console.warn('User authentication check failed:', error);
+        setUserRole('user'); // Default to user role
       }
     };
     
