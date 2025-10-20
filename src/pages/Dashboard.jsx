@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, useCallback } from "react";
-import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Shield } from "lucide-react";
@@ -12,6 +11,7 @@ import SetPriceButton from "../components/dashboard/SetPriceButton";
 import { Plus, BarChart2 } from 'lucide-react';
 import DashboardStats from '../components/dashboard/DashboardStats';
 import IPFSUploader from '../components/IPFSUploader';
+import Ping from '../components/Ping';
 
 const translations = {
   en: {
@@ -278,6 +278,9 @@ export default function Dashboard() {
               {t.newProof}
           </Button>
         </motion.div>
+
+        {/* Ping component for contract diagnostics */}
+        <Ping />
 
         {isLoading ? (
           <div className="text-center">

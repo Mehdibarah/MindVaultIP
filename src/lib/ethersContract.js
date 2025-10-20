@@ -4,14 +4,24 @@ import mindVaultIPCoreABI from './mindvaultipcoreABI.json';
 // Contract configuration
 const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '0x1234567890123456789012345678901234567890';
 const PAYMENT_ADDRESS = import.meta.env.VITE_PAYMENT_ADDRESS || '0x63A8000bD167183AA43629d7C315d0FCc14B95ea';
+const RPC_URL = import.meta.env.VITE_RPC_URL || 'https://base-mainnet.g.alchemy.com/v2/demo';
 const BASE_CHAIN_ID = 8453; // Base mainnet
 const BASE_RPC_URL = 'https://mainnet.base.org';
+
+// Log environment variables for debugging
+console.log('🔧 EthersContract Environment variables:', {
+  CONTRACT_ADDRESS,
+  PAYMENT_ADDRESS,
+  RPC_URL,
+  hasABI: !!mindVaultIPCoreABI
+});
 
 // Contract instances cache
 let contractInstance = null;
 let paymentContractInstance = null;
 let provider = null;
 let signer = null;
+let defaultContract = null;
 
 /**
  * Initialize ethers provider and signer with MetaMask
@@ -244,7 +254,7 @@ export async function getContractBalance(address) {
   try {
     const contract = getContractInstance();
     const balance = await contract.balanceOf(address);
-    return ethers.formatEther(balance);
+    return ethers.utils.formatEther(balance);
   } catch (error) {
     console.error('Failed to get contract balance:', error);
     throw error;
@@ -260,7 +270,7 @@ export async function getContractBalance(address) {
 export async function transferTokens(to, amount) {
   try {
     const contract = getContractInstance();
-    const amountWei = ethers.parseEther(amount);
+    const amountWei = ethers.utils.parseEther(amount);
     
     const tx = await contract.transferFrom(
       await signer.getAddress(),
@@ -288,7 +298,7 @@ export async function transferTokens(to, amount) {
 export async function sendETHPayment(amount) {
   try {
     const paymentContract = getPaymentContractInstance();
-    const amountWei = ethers.parseEther(amount);
+    const amountWei = ethers.utils.parseEther(amount);
     
     const tx = await signer.sendTransaction({
       to: PAYMENT_ADDRESS,
@@ -317,9 +327,69 @@ export async function getAllowance(owner, spender) {
   try {
     const contract = getContractInstance();
     const allowance = await contract.allowance(owner, spender);
-    return ethers.formatEther(allowance);
+    return ethers.utils.formatEther(allowance);
   } catch (error) {
     console.error('Failed to get allowance:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create a default contract instance with automatic provider detection
+ * @returns {Promise<ethers.Contract>} Default contract instance
+ */
+async function createDefaultContract() {
+  try {
+    // Try to get MetaMask provider first
+    if (typeof window !== "undefined" && window.ethereum) {
+      try {
+        // Check if already connected
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        
+        if (accounts.length > 0) {
+          // MetaMask is connected, use it
+          const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
+          const web3Signer = await web3Provider.getSigner();
+          
+          const contract = new ethers.Contract(
+            CONTRACT_ADDRESS,
+            mindVaultIPCoreABI,
+            web3Signer
+          );
+          
+          console.log('✅ EthersContract: Using MetaMask provider with signer');
+          return contract;
+        } else {
+          // MetaMask available but not connected, use provider without signer
+          const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
+          
+          const contract = new ethers.Contract(
+            CONTRACT_ADDRESS,
+            mindVaultIPCoreABI,
+            web3Provider
+          );
+          
+          console.log('✅ EthersContract: Using MetaMask provider without signer');
+          return contract;
+        }
+      } catch (error) {
+        console.warn('⚠️ EthersContract: MetaMask connection failed, falling back to JSON RPC:', error.message);
+      }
+    }
+    
+    // Fallback to JSON RPC provider
+    const rpcProvider = new ethers.providers.JsonRpcProvider(RPC_URL);
+    const contract = new ethers.Contract(
+      CONTRACT_ADDRESS,
+      mindVaultIPCoreABI,
+      rpcProvider
+    );
+    
+    console.log('✅ EthersContract: Using JSON RPC provider fallback');
+    return contract;
+    
+  } catch (error) {
+    console.error('❌ EthersContract: Failed to create default contract:', error);
     throw error;
   }
 }
@@ -329,9 +399,64 @@ export const CONTRACT_CONFIG = {
   address: CONTRACT_ADDRESS,
   paymentAddress: PAYMENT_ADDRESS,
   chainId: BASE_CHAIN_ID,
-  rpcUrl: BASE_RPC_URL,
+  rpcUrl: RPC_URL,
   abi: mindVaultIPCoreABI
 };
+
+// Create a synchronous contract proxy for immediate access
+const contract = new Proxy({}, {
+  get(target, prop) {
+    // If contract is already initialized, return the property
+    if (defaultContract) {
+      return defaultContract[prop];
+    }
+    
+    // For common properties, return async functions that wait for initialization
+    if (prop === 'provider') {
+      return {
+        getNetwork: async () => {
+          const contractInstance = await createDefaultContract();
+          return contractInstance.provider ? await contractInstance.provider.getNetwork() : null;
+        }
+      };
+    }
+    
+    if (prop === 'address') {
+      return CONTRACT_ADDRESS;
+    }
+    
+    // For methods, return async functions that wait for initialization
+    if (typeof prop === 'string') {
+      return async (...args) => {
+        const contractInstance = await createDefaultContract();
+        return contractInstance[prop](...args);
+      };
+    }
+    
+    return undefined;
+  }
+});
+
+// Initialize default contract and set window globals
+(async () => {
+  try {
+    defaultContract = await createDefaultContract();
+    console.log('✅ EthersContract: Default contract initialized successfully');
+    
+    // Set window globals for debugging
+    if (typeof window !== "undefined") {
+      window.ethers = ethers;
+      window.contract = contract;
+      console.log('🌐 EthersContract: Window globals set:', {
+        hasContract: !!window.contract,
+        hasEthers: !!window.ethers,
+        contractAddress: window.contract?.address
+      });
+    }
+  } catch (error) {
+    console.error('❌ EthersContract: Failed to initialize default contract:', error);
+  }
+})();
 
 // Export default contract instance getter
 export default {
@@ -348,6 +473,8 @@ export default {
   transfer: transferTokens,
   sendPayment: sendETHPayment,
   getAllowance,
-  config: CONTRACT_CONFIG
+  config: CONTRACT_CONFIG,
+  // Export the default contract instance
+  contract: contract
 };
 
