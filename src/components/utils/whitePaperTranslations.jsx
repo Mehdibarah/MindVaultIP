@@ -798,11 +798,6 @@ export const translations = {
     s11Tagline: 'Mission: Innovation zu einem globalen Recht machen, nicht zu einem Privileg.',
     govFundTitle: '„Fonds für Regierungen“:',
     govFundContent: 'Zugewiesen zum Aufbau und zur Unterstützung physischer „Talent-Botschafts“-Mini-Städte auf der ganzen Welt – kreative Zentren, in denen Innovatoren und Künstler, die realen Raum benötigen, ihre Talente präsentieren, entwickeln und daran zusammenarbeiten können. Diese Zentren werden von Investoren und öffentlichen Einrichtungen kofinanziert und verbinden das digitale MindVaultIP-Ökosystem mit der realen Talentinfrastruktur.',
-    airdropTitle: 'Öffentliche kostenlose Verteilung (Nachweisbasierter Airdrop)',
-    airdropContent: '1.000.000 IDN, die an verifizierte Mitwirkende vergeben werden (Registrierung von Ideen, Beta-Tests, Fehlerberichte, Empfehlungen).',
-    airdropLockup: 'Sperrfrist: Token bleiben bis 6 Monate nach dem Start (Mitte 2026 + 6 Monate) gesperrt, um den langfristigen Wert zu schützen.',
-    airdropQuote: 'Jeder verteilte Token stellt einen messbaren Beitrag dar – einen verifizierten Nachweis der Kreativität on-chain.',
-    whatIsTitle: 'Was ist Ideon Cerebrum (IDN)?',
     whatIsContent: 'Ideon Cerebrum (IDN) ist der offizielle Utility- und Governance-Token für MindVaultIP – ein dezentrales Ökosystem zur Registrierung, Validierung und zum Handel von geistigem Eigentum. Jede Aktion auf der Plattform – von der Registrierung eines Nachweises bis zum Austausch auf dem Marktplatz – wird von IDN angetrieben.',
   },
   ru: {

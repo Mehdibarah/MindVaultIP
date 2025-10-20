@@ -329,17 +329,6 @@ async function getConnectionStatus() {
   }
 }
 
-// Test RPC endpoint connectivity
-async function testRpcEndpoint(url) {
-  try {
-    const provider = new ethers.providers.JsonRpcProvider(url);
-    await provider.getNetwork();
-    return { url, working: true };
-  } catch (error) {
-    console.warn(`RPC endpoint ${url} failed:`, error.message);
-    return { url, working: false, error: error.message };
-  }
-}
 
 // Find working RPC endpoint
 async function findWorkingRpcEndpoint() {
@@ -402,6 +391,17 @@ const contract = new Proxy({}, {
     const contractInstance = await getContract();
     defaultContract = contractInstance;
     console.log('✅ Contract initialized successfully');
+    
+    // Ensure window globals are updated after initialization
+    if (typeof window !== "undefined") {
+      window.contract = contract;
+      window.ethers = ethers;
+      console.log('🌐 Window globals updated:', {
+        hasContract: !!window.contract,
+        hasEthers: !!window.ethers,
+        contractAddress: window.contract?.address
+      });
+    }
   } catch (error) {
     console.error('❌ Failed to initialize contract:', error);
   }
@@ -420,11 +420,19 @@ async function getContractForConsole() {
 
 // Make contract and ethers available globally in browser
 if (typeof window !== "undefined") {
+  // Immediate exposure for DevTools access
   window.contract = contract;
   window.ethers = ethers;
   window.connectWithMetaMask = connectWithMetaMask;
   window.getConnectionStatus = getConnectionStatus;
   window.getContractForConsole = getContractForConsole;
+  
+  // Log immediate availability
+  console.log('🌐 Window globals exposed immediately:', {
+    hasContract: !!window.contract,
+    hasEthers: !!window.ethers,
+    contractAddress: window.contract?.address
+  });
   
   // Add comprehensive testing functions
   window.testContract = async () => {
