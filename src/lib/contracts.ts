@@ -3,7 +3,7 @@ import mindVaultIPCoreABI from './mindvaultipcoreABI.json'
 
 // Contract addresses from environment variables
 export const CONTRACT_ADDRESSES = {
-  MIND_VAULT_IP_CORE: (import.meta.env.VITE_CONTRACT_ADDRESS || '0xB4be9e66c80fcbe317C5038baDca1') as Address,
+  MIND_VAULT_IP_CORE: (import.meta.env.VITE_CONTRACT_ADDRESS || '0x1234567890123456789012345678901234567890') as Address,
   PAYMENT: (import.meta.env.VITE_PAYMENT_ADDRESS || '0x63A8000bD167183AA43629d7C315d0FCc14B95ea') as Address,
 } as const
 

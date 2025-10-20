@@ -1,10 +1,9 @@
 // Base44 specific error handler to prevent authentication errors from breaking the app
 export const handleBase44Error = (error, context = 'Base44 API call') => {
-  console.warn(`Base44 Error in ${context}:`, error);
-  
-  // List of error messages that should be silently handled
+  // Check if this is an error we should silently handle before logging
   const silentErrors = [
     'You must be logged in',
+    'You must be logged in to access this app',
     'Base44Error',
     'authentication',
     'unauthorized',
@@ -14,13 +13,21 @@ export const handleBase44Error = (error, context = 'Base44 API call') => {
     '401',
     '403',
     'Network Error',
-    'Failed to fetch'
+    'Failed to fetch',
+    'auth_required'
   ];
   
-  // Check if this is an error we should silently handle
   const shouldSilence = silentErrors.some(errorType => 
-    error?.message?.toLowerCase().includes(errorType.toLowerCase())
+    error?.message?.toLowerCase().includes(errorType.toLowerCase()) ||
+    error?.extra_data?.reason === 'auth_required' ||
+    error?.status === 403 ||
+    error?.response?.status === 403
   );
+  
+  // Only log if it's not a silent error
+  if (!shouldSilence) {
+    console.warn(`Base44 Error in ${context}:`, error);
+  }
   
   if (shouldSilence) {
     return null; // Silently handle these errors

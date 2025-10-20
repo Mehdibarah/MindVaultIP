@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import mindVaultIPCoreABI from './mindvaultipcoreABI.json';
 
 // Contract configuration
-const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '0xB4be9e66c80fcbe317C5038baDca1';
+const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '0x1234567890123456789012345678901234567890';
 const PAYMENT_ADDRESS = import.meta.env.VITE_PAYMENT_ADDRESS || '0x63A8000bD167183AA43629d7C315d0FCc14B95ea';
 const BASE_CHAIN_ID = 8453; // Base mainnet
 const BASE_RPC_URL = 'https://mainnet.base.org';
@@ -27,8 +27,8 @@ export async function initializeEthers() {
     // Request account access
     await window.ethereum.request({ method: 'eth_requestAccounts' });
 
-    // Create provider and signer
-    provider = new ethers.BrowserProvider(window.ethereum);
+    // Create provider and signer (ethers v5)
+    provider = new ethers.providers.Web3Provider(window.ethereum);
     signer = await provider.getSigner();
 
     // Check if connected to Base network
@@ -350,3 +350,4 @@ export default {
   getAllowance,
   config: CONTRACT_CONFIG
 };
+

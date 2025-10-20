@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import SetPriceButton from "../components/dashboard/SetPriceButton";
 import { Plus, BarChart2 } from 'lucide-react';
 import DashboardStats from '../components/dashboard/DashboardStats';
+import IPFSUploader from '../components/IPFSUploader';
 
 const translations = {
   en: {
@@ -293,14 +294,7 @@ export default function Dashboard() {
             </motion.div>
 
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-                <div className="col-span-full text-center py-20">
-                  <Shield className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                  <h3 className="text-2xl font-semibold text-white mb-2">{t.noProofsYet}</h3>
-                  <p className="text-gray-400 mb-6">{t.noProofsDesc}</p>
-                  <Button disabled className="glow-button px-8 py-3 rounded-xl text-white font-semibold">
-                      {t.createFirstProof}
-                  </Button>
-                </div>
+              <IPFSUploader />
             </motion.div>
           </>
         )}

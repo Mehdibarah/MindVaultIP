@@ -474,6 +474,18 @@ function AppLayout({ children, currentPageName }) {
   useEffect(() => {
     const checkUser = async () => {
       try {
+        // Check if user is likely authenticated before making the call
+        // This prevents unnecessary 403 errors from being logged
+        const hasAuthToken = localStorage.getItem('base44_auth_token') || 
+                           sessionStorage.getItem('base44_auth_token') ||
+                           document.cookie.includes('base44_auth');
+        
+        if (!hasAuthToken) {
+          // No auth token found, skip the API call to prevent 403 error
+          setUserRole('user');
+          return;
+        }
+        
         // Use safe API call to prevent errors from breaking the app
         const user = await safeBase44Auth(() => base44.auth.me(), null);
         if (user && user.role) {
@@ -482,8 +494,10 @@ function AppLayout({ children, currentPageName }) {
           setUserRole('user');
         }
       } catch (error) {
-        // Handle authentication errors gracefully
-        console.warn('User authentication check failed:', error);
+        // Handle authentication errors gracefully - don't log expected 403 errors
+        if (error?.status !== 403 && error?.response?.status !== 403) {
+          console.warn('User authentication check failed:', error);
+        }
         setUserRole('user'); // Default to user role
       }
     };

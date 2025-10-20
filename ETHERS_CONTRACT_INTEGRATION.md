@@ -283,3 +283,4 @@ const result = await safeBase44Call(() => contract.balanceOf(address), '0');
 5. **Add More Functions**: Extend the contract integration as needed
 
 The ethers.js smart contract integration is now complete and production-ready! 🎉
+
