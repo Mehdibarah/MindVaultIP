@@ -2,8 +2,6 @@ import Layout from "./Layout.jsx";
 import Ping from "@/components/Ping"; // 👈 این خط اضافه شد
 
 import Dashboard from "./Dashboard";
-import CreateProof from "./CreateProof";
-import PublicProof from "./PublicProof";
 import Landing from "./Landing";
 import AIMentor from "./AIMentor";
 import Gallery from "./Gallery";
@@ -19,8 +17,6 @@ import ExpertDashboard from "./ExpertDashboard";
 import ApplyExpert from "./ApplyExpert";
 import Profile from "./Profile";
 import Signup from "./Signup";
-import ContractDemo from "./ContractDemo";
-import EthersContractDemo from "./EthersContractDemo";
 
 import {
   BrowserRouter as Router,
@@ -40,8 +36,6 @@ import { FeatureGuard } from "@/components/common/FeatureGuard";
 
 const PAGES = {
   Dashboard: Dashboard,
-  CreateProof: CreateProof,
-  PublicProof: PublicProof,
   Landing: Landing,
   AIMentor: AIMentor,
   Gallery: Gallery,
@@ -57,8 +51,6 @@ const PAGES = {
   ApplyExpert: ApplyExpert,
   Profile: Profile,
   Signup: Signup,
-  ContractDemo: ContractDemo,
-  EthersContractDemo: EthersContractDemo,
 };
 
 function _getCurrentPage(url) {
@@ -81,8 +73,6 @@ function PagesContent() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/Dashboard" element={<Dashboard />} />
-        <Route path="/CreateProof" element={<CreateProof />} />
-        <Route path="/PublicProof" element={<PublicProof />} />
         <Route path="/Landing" element={<Landing />} />
         <Route
           path="/AIMentor"
@@ -136,8 +126,6 @@ function PagesContent() {
         <Route path="/ApplyExpert" element={<ApplyExpert />} />
         <Route path="/Profile" element={<Profile />} />
         <Route path="/Signup" element={<Signup />} />
-        <Route path="/ContractDemo" element={<ContractDemo />} />
-        <Route path="/EthersContractDemo" element={<EthersContractDemo />} />
       </Routes>
     </Layout>
   );

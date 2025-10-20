@@ -1,6 +1,22 @@
 import { ethers } from "ethers";
 import abi from "./mindvaultipcoreABI.json";
 
+// Debug environment variables
+console.log('🔧 Contract.js Environment variables:', {
+  VITE_RPC_URL: import.meta.env.VITE_RPC_URL,
+  VITE_CONTRACT_ADDRESS: import.meta.env.VITE_CONTRACT_ADDRESS,
+  hasABI: !!abi
+});
+
+// Validate environment variables
+if (!import.meta.env.VITE_RPC_URL) {
+  throw new Error('VITE_RPC_URL is not defined in environment variables');
+}
+
+if (!import.meta.env.VITE_CONTRACT_ADDRESS) {
+  throw new Error('VITE_CONTRACT_ADDRESS is not defined in environment variables');
+}
+
 // Create readonly provider using Base mainnet RPC
 const readonly = new ethers.providers.JsonRpcProvider(import.meta.env.VITE_RPC_URL);
 
