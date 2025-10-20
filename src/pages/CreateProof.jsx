@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import UploadProgress from '../components/create/UploadProgress';
 import { useWallet } from '@/components/wallet/WalletContext';
-import RegistrationFeePayment from '@/components/contract/RegistrationFeePayment';
+// import RegistrationFeePayment from '@/components/contract/RegistrationFeePayment'; // Temporarily disabled due to old contract system
 import { safeApiCall } from '@/utils/apiErrorHandler';
 import { safeBase44Call } from '@/utils/base44ErrorHandler';
 
@@ -299,11 +299,25 @@ export default function CreateProof() {
                             </div>
                         </div>
 
-                        {/* Payment Component */}
-                        <RegistrationFeePayment
-                            onPaymentSuccess={handlePaymentSuccess}
-                            onPaymentError={handlePaymentError}
-                        />
+                        {/* Payment Component - Temporarily Disabled */}
+                        <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 text-center">
+                            <div className="flex items-center justify-center mb-4">
+                                <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                                    <Info className="w-6 h-6 text-yellow-500" />
+                                </div>
+                            </div>
+                            <h3 className="text-lg font-semibold text-white mb-2">Payment System Temporarily Disabled</h3>
+                            <p className="text-gray-300 mb-4">
+                                The registration fee payment system is currently being updated to work with the new contract system. 
+                                You can still create proofs, but payment functionality will be restored soon.
+                            </p>
+                            <Button
+                                onClick={handlePaymentSuccess}
+                                className="bg-[#00E5FF] hover:bg-[#00E5FF]/80 text-black font-semibold"
+                            >
+                                Continue Without Payment
+                            </Button>
+                        </div>
 
                         {/* Back Button */}
                         <div className="text-center">

@@ -2,6 +2,7 @@ import Layout from "./Layout.jsx";
 import Ping from "@/components/Ping"; // 👈 این خط اضافه شد
 
 import Dashboard from "./Dashboard";
+import CreateProof from "./CreateProof";
 import Landing from "./Landing";
 import AIMentor from "./AIMentor";
 import Gallery from "./Gallery";
@@ -36,6 +37,7 @@ import { FeatureGuard } from "@/components/common/FeatureGuard";
 
 const PAGES = {
   Dashboard: Dashboard,
+  CreateProof: CreateProof,
   Landing: Landing,
   AIMentor: AIMentor,
   Gallery: Gallery,
@@ -73,6 +75,7 @@ function PagesContent() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/Dashboard" element={<Dashboard />} />
+        <Route path="/CreateProof" element={<CreateProof />} />
         <Route path="/Landing" element={<Landing />} />
         <Route
           path="/AIMentor"

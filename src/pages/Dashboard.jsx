@@ -273,10 +273,12 @@ export default function Dashboard() {
             <BarChart2 className="w-8 h-8 text-[#00E5FF]" />
             <h1 className="text-3xl font-bold text-white">{t.title}</h1>
           </div>
-          <Button disabled className="glow-button text-white font-semibold w-full md:w-auto">
-              <Plus className="w-5 h-5 mr-2" />
-              {t.newProof}
-          </Button>
+          <Link to={createPageUrl('CreateProof')}>
+            <Button className="glow-button text-white font-semibold w-full md:w-auto">
+                <Plus className="w-5 h-5 mr-2" />
+                {t.newProof}
+            </Button>
+          </Link>
         </motion.div>
 
         {/* Ping component for contract diagnostics */}
