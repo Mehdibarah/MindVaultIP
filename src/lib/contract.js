@@ -8,4 +8,8 @@ const contract = new ethers.Contract(
   provider
 );
 
+if (typeof window !== "undefined") {
+  window.contract = contract;
+}
+
 export default contract;
