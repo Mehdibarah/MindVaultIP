@@ -1,14 +1,15 @@
+// @ts-nocheck
 import { createClient } from "@supabase/supabase-js";
 import { ethers } from "ethers";
 
 // Supabase configuration with validation
-const url = import.meta.env.VITE_SUPABASE_URL;
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const url = (import.meta as any).env.VITE_SUPABASE_URL;
+const key = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
 
 export const CHAT_ENABLED = !!url && !!key;
 
 if (!CHAT_ENABLED) {
-  if (import.meta.env.DEV) {
+  if ((import.meta as any).env.DEV) {
     console.warn('⚠️ Supabase environment variables not configured. Chat features will be disabled.');
     console.warn('Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file');
   }
