@@ -24,7 +24,13 @@ const getProgressColor = (score) => {
 };
 
 export default function AIScoreBreakdown({ proof }) {
-  if (!proof.ai_final_score) return null;
+  if (!proof.ai_final_score) {
+    return (
+      <div className="text-sm text-gray-500 italic p-4 text-center">
+        AI score not available for this proof
+      </div>
+    );
+  }
 
   const finalScore = proof.ai_final_score || 0;
   const passed = finalScore >= 70;

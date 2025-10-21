@@ -5,6 +5,7 @@ import '@/index.css'
 import { WagmiProvider } from 'wagmi'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { setupWeb3Modal, wagmiConfig, queryClient } from './lib/wagmi'
+import { logEnvironmentInfo, validateRequiredEnv } from './lib/diagnostics'
 
 // Global error handler to catch unhandled errors
 window.addEventListener('error', (event) => {
@@ -21,6 +22,13 @@ window.addEventListener('unhandledrejection', (event) => {
 
 // Setup Web3Modal once
 setupWeb3Modal()
+
+// Log environment info at startup
+logEnvironmentInfo()
+const envValidation = validateRequiredEnv()
+if (!envValidation.isValid) {
+  console.warn('⚠️ Environment validation failed:', envValidation.missing)
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <WagmiProvider config={wagmiConfig}>

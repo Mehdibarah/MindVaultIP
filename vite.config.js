@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   
   return {
+    base: "/",
     plugins: [react()],
     server: {
       allowedHosts: true
@@ -33,7 +34,9 @@ export default defineConfig(({ mode }) => {
           prev[`import.meta.env.${key}`] = JSON.stringify(env[key])
         }
         return prev
-      }, {})
+      }, {}),
+      // Suppress Lit dev mode warning
+      'process.env.NODE_ENV': JSON.stringify(mode === 'production' ? 'production' : 'development')
     }
   }
 }) 

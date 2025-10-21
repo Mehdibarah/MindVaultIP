@@ -54,5 +54,6 @@ export function useFeatureGuard(feature, fallbackPath = '/') {
   if (!feature) {
     return <Navigate to={fallbackPath} replace />;
   }
-  return null;
+  // Never return null - return empty fragment instead
+  return <></>;
 }

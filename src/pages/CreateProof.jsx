@@ -13,6 +13,17 @@ import { useWallet } from '@/components/wallet/WalletContext';
 // import RegistrationFeePayment from '@/components/contract/RegistrationFeePayment'; // Temporarily disabled due to old contract system
 import { safeApiCall } from '@/utils/apiErrorHandler';
 import { safeBase44Call } from '@/utils/base44ErrorHandler';
+import { ethers } from 'ethers';
+import { 
+    getPaymentAddress, 
+    getRegFee, 
+    paymentsEnabled, 
+    isValidPaymentAddress, 
+    isValidRegFee, 
+    debugEnv 
+} from '@/lib/env';
+import { PAYMENTS_ENABLED, PAYMENT_ADDRESS, REG_FEE_ETH, payRegistrationFee } from '@/lib/ethersContract';
+import EnvDebugBadge from './CreateProof/EnvDebugBadge';
 
 // Helper for SHA-256 Hashing
 async function getFileHash(file) {
@@ -25,6 +36,11 @@ async function getFileHash(file) {
 
 export default function CreateProof() {
     const [language, setLanguage] = useState(localStorage.getItem('lang') || 'en');
+    const [providerError, setProviderError] = useState(null);
+    
+    // Payment system state
+    const [isPaying, setIsPaying] = useState(false);
+    const [paymentError, setPaymentError] = useState(null);
     
     // Form State
     const [title, setTitle] = useState('');
@@ -161,6 +177,65 @@ export default function CreateProof() {
         setStatus('error');
     };
 
+    // Handle provider errors gracefully
+    useEffect(() => {
+        try {
+            // Test if provider is available
+            if (typeof window !== 'undefined' && window.contract) {
+                setProviderError(null);
+            }
+        } catch (error) {
+            console.warn('Provider not available:', error);
+            setProviderError('Blockchain provider not available. Some features may be limited.');
+        }
+    }, []);
+
+    // Payment system configuration
+    const canPay = paymentsEnabled() && isValidPaymentAddress() && isValidRegFee();
+    const regFee = getRegFee();
+    const paymentAddress = getPaymentAddress();
+
+    // Debug environment and payment status
+    useEffect(() => {
+        const envDebug = debugEnv();
+        console.log("PAY DEBUG =>", envDebug, { canPay });
+        console.debug('CreateProof: payment env', { PAYMENTS_ENABLED, PAYMENT_ADDRESS, REG_FEE_ETH });
+        
+        // Set global debug object for DevTools
+        if (typeof window !== 'undefined') {
+            window.__ENV__ = { ...envDebug, canPay };
+        }
+    }, [canPay]);
+
+    // Payment handler
+    const handlePayRegistration = async () => {
+        if (!PAYMENTS_ENABLED) {
+            setPaymentError('Payment system is not enabled.');
+            return;
+        }
+
+        setIsPaying(true);
+        setPaymentError(null);
+
+        try {
+            console.debug('CreateProof: invoking payRegistrationFee', { PAYMENT_ADDRESS, REG_FEE_ETH });
+            const receipt = await payRegistrationFee();
+            console.log('Payment receipt:', receipt.transactionHash || receipt.transactionHash || receipt?.transactionHash || receipt?.transactionHash);
+
+            // store payment hash and continue
+            const txHash = receipt.transactionHash || (receipt && receipt.transactionHash) || (receipt && receipt.transaction && receipt.transaction.hash) || null;
+            setPaymentHash(txHash || (receipt && receipt.hash) || '');
+            setStatus('uploading');
+            setStep(1);
+            proceedWithRegistration();
+        } catch (error) {
+            console.error('Payment failed:', error);
+            setPaymentError(error.message || 'Payment failed. Please try again.');
+        } finally {
+            setIsPaying(false);
+        }
+    };
+
     const proceedWithRegistration = async () => {
         try {
             // Step 2: Upload to IPFS
@@ -225,6 +300,34 @@ export default function CreateProof() {
         // Move to payment step instead of direct registration
         setStatus('payment');
     };
+
+    // Show provider error if present
+    if (providerError) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-4">
+                <motion.div 
+                    initial={{ scale: 0.8, opacity: 0 }} 
+                    animate={{ scale: 1, opacity: 1 }} 
+                    className="w-full max-w-md bg-[#1a2332] rounded-2xl p-8 shadow-2xl border border-yellow-500/30"
+                >
+                    <div className="w-16 h-16 bg-gradient-to-br from-yellow-600 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Info className="w-10 h-10 text-white" />
+                    </div>
+                    <h2 className="text-3xl font-bold text-white mb-2">Provider Unavailable</h2>
+                    <p className="text-gray-400 mb-6">{providerError}</p>
+                    <p className="text-sm text-gray-500 mb-6">
+                        You can still create proofs, but blockchain features will be limited.
+                    </p>
+                    <Button
+                        onClick={() => setProviderError(null)}
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                    >
+                        Continue Anyway
+                    </Button>
+                </motion.div>
+            </div>
+        );
+    }
 
     if (!isConnected) {
         return (
@@ -299,25 +402,68 @@ export default function CreateProof() {
                             </div>
                         </div>
 
-                        {/* Payment Component - Temporarily Disabled */}
-                        <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 text-center">
-                            <div className="flex items-center justify-center mb-4">
-                                <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                                    <Info className="w-6 h-6 text-yellow-500" />
+                        {/* Payment Component - Conditional Rendering */}
+                        {canPay ? (
+                            <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 text-center">
+                                <div className="flex items-center justify-center mb-4">
+                                    <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
+                                        <CheckCircle className="w-6 h-6 text-green-500" />
+                                    </div>
                                 </div>
+                                <h3 className="text-lg font-semibold text-white mb-2">Registration Fee</h3>
+                                <p className="text-gray-300 mb-4">
+                                    Complete your proof registration by paying the registration fee of <span className="font-semibold text-[#00E5FF]">{regFee} ETH</span>.
+                                </p>
+                                
+                                {paymentError && (
+                                    <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-4">
+                                        <p className="text-red-300 text-sm">{paymentError}</p>
+                                    </div>
+                                )}
+                                
+                                <Button
+                                    onClick={handlePayRegistration}
+                                    disabled={isPaying}
+                                    className="bg-[#00E5FF] hover:bg-[#00E5FF]/80 text-black font-semibold w-full"
+                                >
+                                    {isPaying ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2"></div>
+                                            Processing Payment...
+                                        </>
+                                    ) : (
+                                        `Pay & Register (${regFee} ETH)`
+                                    )}
+                                </Button>
+                                
+                                <Button
+                                    onClick={handlePaymentSuccess}
+                                    variant="outline"
+                                    className="border-gray-600 text-gray-300 hover:bg-gray-700 w-full mt-3"
+                                >
+                                    Continue Without Payment
+                                </Button>
                             </div>
-                            <h3 className="text-lg font-semibold text-white mb-2">Payment System Temporarily Disabled</h3>
-                            <p className="text-gray-300 mb-4">
-                                The registration fee payment system is currently being updated to work with the new contract system. 
-                                You can still create proofs, but payment functionality will be restored soon.
-                            </p>
-                            <Button
-                                onClick={handlePaymentSuccess}
-                                className="bg-[#00E5FF] hover:bg-[#00E5FF]/80 text-black font-semibold"
-                            >
-                                Continue Without Payment
-                            </Button>
-                        </div>
+                        ) : (
+                            <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 text-center">
+                                <div className="flex items-center justify-center mb-4">
+                                    <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                                        <Info className="w-6 h-6 text-yellow-500" />
+                                    </div>
+                                </div>
+                                <h3 className="text-lg font-semibold text-white mb-2">Payment System Temporarily Disabled</h3>
+                                <p className="text-gray-300 mb-4">
+                                    The registration fee payment system is currently being updated to work with the new contract system. 
+                                    You can still create proofs, but payment functionality will be restored soon.
+                                </p>
+                                <Button
+                                    onClick={handlePaymentSuccess}
+                                    className="bg-[#00E5FF] hover:bg-[#00E5FF]/80 text-black font-semibold"
+                                >
+                                    Continue Without Payment
+                                </Button>
+                            </div>
+                        )}
 
                         {/* Back Button */}
                         <div className="text-center">
@@ -382,6 +528,9 @@ export default function CreateProof() {
 
     return (
         <div className="max-w-4xl mx-auto p-4 md:p-8">
+            {/* Debug badge for development */}
+            <EnvDebugBadge />
+            
             <div className="text-center mb-10">
                 <h1 className="text-3xl md:text-4xl font-bold text-white">{t.pageTitle}</h1>
                 <p className="text-gray-400 mt-2">{t.pageSubtitle}</p>

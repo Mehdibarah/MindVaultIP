@@ -6,5 +6,5 @@ import React from 'react';
  * This component now returns null to prevent errors.
  */
 export default function NotificationBell() {
-  return null;
+  return <></>;
 }

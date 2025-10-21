@@ -84,7 +84,7 @@ export default function UnifiedWalletConnect() {
 
   // Return null until mounted to prevent hydration mismatch
   if (!mounted) {
-    return null
+    return <></>
   }
 
   // ==========================================

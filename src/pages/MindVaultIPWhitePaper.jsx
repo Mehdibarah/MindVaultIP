@@ -54,7 +54,8 @@ export default function WhitePaperPage() {
                 </motion.div>
             </header>
 
-            <main className="max-w-4xl mx-auto px-4 py-8">
+            <main className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
                 {/* 1. Abstract */}
                 <Section title={t.s1Title} isRTL={isRTL}>
                     <p>{t.s1Content}</p>
@@ -222,6 +223,17 @@ export default function WhitePaperPage() {
                         <p>{t.s11Tagline}</p>
                     </div>
                 </Section>
+                </div>
+
+                {/* Right-side Cerebrum Awards aside */}
+                <aside className="lg:col-span-1 sticky top-24 h-fit space-y-6">
+                    <div className="bg-[#111827] p-6 rounded-2xl border border-gray-700">
+                        <h3 className="text-lg font-bold text-yellow-300 mb-3">{t.cerebrumTitle}</h3>
+                        <div className="prose prose-invert text-gray-300 text-sm whitespace-pre-line">
+                            {t.cerebrumContent}
+                        </div>
+                    </div>
+                </aside>
             </main>
         </div>
     );

@@ -93,7 +93,9 @@ export default function VotingButtons({ proof, onVoteUpdate }) {
 
   // Don't show voting buttons for own proofs or if user is not connected
   if (!isConnected || proof.owner_wallet_address === address) {
-    return null;
+    return <div className="text-sm text-gray-500 italic">
+      {!isConnected ? "Connect wallet to vote" : "Cannot vote on your own proof"}
+    </div>;
   }
 
   return (

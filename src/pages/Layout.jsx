@@ -533,6 +533,7 @@ function AppLayout({ children, currentPageName }) {
         { name: t.gallery, icon: Compass, page: 'Gallery' },
         { name: t.watchlist, icon: List, page: 'Watchlist' },
         { name: t.profile, icon: User, page: 'Profile' },
+        { name: "Chat", icon: MessageSquare, page: 'Chat' },
         ...(FEATURE_EXPERT_DASHBOARD ? [{ name: t.expertDashboard, icon: UserCog, page: 'ExpertDashboard' }] : []),
       ];
 

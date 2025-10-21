@@ -1,5 +1,7 @@
-import Layout from "./Layout.jsx";
+import AppLayout from "./Layout.jsx";
 import Ping from "@/components/Ping"; // 👈 این خط اضافه شد
+import RequireWallet from "@/routes/RequireWallet";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import Dashboard from "./Dashboard";
 import CreateProof from "./CreateProof";
@@ -18,6 +20,8 @@ import ExpertDashboard from "./ExpertDashboard";
 import ApplyExpert from "./ApplyExpert";
 import Profile from "./Profile";
 import Signup from "./Signup";
+import Chat from "./Chat";
+import DirectMessage from "./DirectMessage";
 
 import {
   BrowserRouter as Router,
@@ -53,6 +57,8 @@ const PAGES = {
   ApplyExpert: ApplyExpert,
   Profile: Profile,
   Signup: Signup,
+  Chat: Chat,
+  DirectMessage: DirectMessage,
 };
 
 function _getCurrentPage(url) {
@@ -70,74 +76,80 @@ function PagesContent() {
   const currentPage = _getCurrentPage(location.pathname);
 
   return (
-    <Layout currentPageName={currentPage}>
-      <Ping /> {/* 👈 اینجا اضافه شد تا اتصال تست بشه */}
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/Dashboard" element={<Dashboard />} />
-        <Route path="/CreateProof" element={<CreateProof />} />
-        <Route path="/Landing" element={<Landing />} />
-        <Route
-          path="/AIMentor"
-          element={
-            <FeatureGuard feature={FEATURE_AI_MENTOR}>
-              <AIMentor />
-            </FeatureGuard>
-          }
-        />
-        <Route path="/Gallery" element={<Gallery />} />
-        <Route
-          path="/Marketplace"
-          element={
-            <FeatureGuard feature={FEATURE_MARKETPLACE}>
-              <Marketplace />
-            </FeatureGuard>
-          }
-        />
-        <Route
-          path="/AdminPanel"
-          element={
-            <FeatureGuard feature={FEATURE_ADMIN_PANEL}>
-              <AdminPanel />
-            </FeatureGuard>
-          }
-        />
-        <Route
-          path="/MindVaultIPWhitePaper"
-          element={<MindVaultIPWhitePaper />}
-        />
-        <Route path="/TermsOfService" element={<TermsOfService />} />
-        <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
-        <Route path="/WalletSecurity" element={<WalletSecurity />} />
-        <Route
-          path="/Messages"
-          element={
-            <FeatureGuard feature={FEATURE_MESSAGES}>
-              <Messages />
-            </FeatureGuard>
-          }
-        />
-        <Route path="/Watchlist" element={<Watchlist />} />
-        <Route
-          path="/ExpertDashboard"
-          element={
-            <FeatureGuard feature={FEATURE_EXPERT_DASHBOARD}>
-              <ExpertDashboard />
-            </FeatureGuard>
-          }
-        />
-        <Route path="/ApplyExpert" element={<ApplyExpert />} />
-        <Route path="/Profile" element={<Profile />} />
-        <Route path="/Signup" element={<Signup />} />
-      </Routes>
-    </Layout>
+    <AppLayout currentPageName={currentPage}>
+      <Ping />
+      <RequireWallet>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/Dashboard" element={<Dashboard />} />
+          <Route path="/CreateProof" element={<CreateProof />} />
+          <Route path="/Landing" element={<Landing />} />
+          <Route
+            path="/AIMentor"
+            element={
+              <FeatureGuard feature={FEATURE_AI_MENTOR}>
+                <AIMentor />
+              </FeatureGuard>
+            }
+          />
+          <Route path="/Gallery" element={<Gallery />} />
+          <Route
+            path="/Marketplace"
+            element={
+              <FeatureGuard feature={FEATURE_MARKETPLACE}>
+                <Marketplace />
+              </FeatureGuard>
+            }
+          />
+          <Route
+            path="/AdminPanel"
+            element={
+              <FeatureGuard feature={FEATURE_ADMIN_PANEL}>
+                <AdminPanel />
+              </FeatureGuard>
+            }
+          />
+          <Route
+            path="/MindVaultIPWhitePaper"
+            element={<MindVaultIPWhitePaper />}
+          />
+          <Route path="/TermsOfService" element={<TermsOfService />} />
+          <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
+          <Route path="/WalletSecurity" element={<WalletSecurity />} />
+          <Route
+            path="/Messages"
+            element={
+              <FeatureGuard feature={FEATURE_MESSAGES}>
+                <Messages />
+              </FeatureGuard>
+            }
+          />
+          <Route path="/Watchlist" element={<Watchlist />} />
+          <Route
+            path="/ExpertDashboard"
+            element={
+              <FeatureGuard feature={FEATURE_EXPERT_DASHBOARD}>
+                <ExpertDashboard />
+              </FeatureGuard>
+            }
+          />
+          <Route path="/ApplyExpert" element={<ApplyExpert />} />
+          <Route path="/Profile" element={<Profile />} />
+          <Route path="/Signup" element={<Signup />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/chat/:peerAddress" element={<DirectMessage />} />
+        </Routes>
+      </RequireWallet>
+    </AppLayout>
   );
 }
 
 export default function Pages() {
   return (
-    <Router>
-      <PagesContent />
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <PagesContent />
+      </Router>
+    </ErrorBoundary>
   );
 }

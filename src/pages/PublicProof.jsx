@@ -186,7 +186,17 @@ export default function PublicProof() {
     }
     
     if (!proof) {
-        return null;
+        return (
+            <div className="min-h-screen bg-[#0B1220] flex items-center justify-center p-6">
+                <div className="bg-gray-800 border border-gray-600 rounded-lg p-8 text-center max-w-md">
+                    <h3 className="text-lg font-semibold text-white mb-2">Proof Not Found</h3>
+                    <p className="text-gray-300 mb-6">The requested proof could not be found or may have been removed.</p>
+                    <Link to="/" className="text-[#00E5FF] hover:underline">
+                        Return to Home
+                    </Link>
+                </div>
+            </div>
+        );
     }
 
     // Since wallet is removed, isOwner is always false for public view.

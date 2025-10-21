@@ -3,7 +3,23 @@ import mindVaultIPCoreABI from './mindvaultipcoreABI.json';
 
 // Contract configuration
 const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '0x1234567890123456789012345678901234567890';
-const PAYMENT_ADDRESS = import.meta.env.VITE_PAYMENT_ADDRESS || '0x63A8000bD167183AA43629d7C315d0FCc14B95ea';
+// Export payment-related env values and validate them
+const RAW_PAYMENT_ADDRESS = String(import.meta.env.VITE_PAYMENT_ADDRESS || '0x63A8000bD167183AA43629d7C315d0FCc14B95ea').trim();
+const RAW_PAYMENTS_ENABLED = String(import.meta.env.VITE_PAYMENTS_ENABLED || '').trim().toLowerCase() === 'true';
+const RAW_REG_FEE = String(import.meta.env.VITE_REG_FEE_ETH || '0.002').trim();
+
+// Expose config as requested
+export const PAYMENT_ADDRESS = RAW_PAYMENT_ADDRESS;
+export const REG_FEE_ETH = Number(RAW_REG_FEE || '0.002');
+
+// Validate payment address and enabled flag
+let _paymentsEnabled = RAW_PAYMENTS_ENABLED;
+if (_paymentsEnabled && !ethers.utils.isAddress(PAYMENT_ADDRESS)) {
+  console.warn('EthersContract: VITE_PAYMENT_ADDRESS is not a valid address. Disabling payments.', PAYMENT_ADDRESS);
+  _paymentsEnabled = false;
+}
+export const PAYMENTS_ENABLED = _paymentsEnabled;
+
 const RPC_URL = import.meta.env.VITE_RPC_URL || 'https://base-mainnet.g.alchemy.com/v2/demo';
 const BASE_CHAIN_ID = 8453; // Base mainnet
 const BASE_RPC_URL = 'https://mainnet.base.org';
@@ -12,9 +28,12 @@ const BASE_RPC_URL = 'https://mainnet.base.org';
 console.log('🔧 EthersContract Environment variables:', {
   CONTRACT_ADDRESS,
   PAYMENT_ADDRESS,
+  PAYMENTS_ENABLED,
+  REG_FEE_ETH,
   RPC_URL,
   hasABI: !!mindVaultIPCoreABI
 });
+console.debug('EthersContract: raw env', { RAW_PAYMENTS_ENABLED, RAW_PAYMENT_ADDRESS, RAW_REG_FEE });
 
 // Contract instances cache
 let contractInstance = null;
@@ -111,6 +130,28 @@ export function getPaymentContractInstance(signerInstance = null) {
   }
 
   return paymentContractInstance;
+}
+
+/**
+ * Send native ETH to the configured payment address for registration fee
+ * Returns the transaction receipt from wait().
+ */
+export async function payRegistrationFee() {
+  if (!PAYMENTS_ENABLED) throw new Error('Payments disabled');
+
+  // Parse the value from REG_FEE_ETH
+  const value = ethers.utils.parseEther(String(REG_FEE_ETH));
+
+  // initialize and get signer
+  const init = await initializeEthers();
+  const activeSigner = init.signer;
+  if (!activeSigner) throw new Error('No signer available for payment');
+
+  console.debug('EthersContract.payRegistrationFee: sending payment', { to: PAYMENT_ADDRESS, value: REG_FEE_ETH });
+
+  const tx = await activeSigner.sendTransaction({ to: PAYMENT_ADDRESS, value });
+  const receipt = await tx.wait();
+  return receipt;
 }
 
 /**

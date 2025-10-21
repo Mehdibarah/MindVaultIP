@@ -199,7 +199,11 @@ export default function ValidationVotingButtons({ proof, onVoteUpdate }) {
 
   // Don't show voting buttons for own proofs or if user is not connected
   if (!isConnected || proof.owner_wallet_address === address || proof.validation_status !== 'pending') {
-    return null;
+    return <div className="text-sm text-gray-500 italic">
+      {!isConnected ? "Connect wallet to vote" : 
+       proof.owner_wallet_address === address ? "Cannot vote on your own proof" :
+       "Voting not available for this proof"}
+    </div>;
   }
 
   const totalVotes = (proof.vote_count_positive || 0) + (proof.vote_count_negative || 0);

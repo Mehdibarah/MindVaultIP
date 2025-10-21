@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { WalletProvider } from "@/components/wallet/WalletContext"
 import { initializeI18n } from "@/utils/i18nConfig"
 import { useEffect } from "react"
+import DiagnosticsWidget from "@/components/DiagnosticsWidget"
 
 function App() {
   // Initialize i18n configuration on app startup
@@ -15,6 +16,7 @@ function App() {
     <WalletProvider>
       <Pages />
       <Toaster />
+      <DiagnosticsWidget />
     </WalletProvider>
   )
 }

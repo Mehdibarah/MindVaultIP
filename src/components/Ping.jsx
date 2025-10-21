@@ -23,5 +23,5 @@ export default function Ping() {
     pingContract();
   }, []);
   
-  return null;
+  return <></>;
 }

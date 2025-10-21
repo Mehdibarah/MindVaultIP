@@ -80,10 +80,9 @@ const enTranslations = {
 
   s10Title: '10. Roadmap',
   s10TableData: [
-    { year: "2024 (Q4)", milestone: "Platform Beta Launch & First Creator Airdrop" },
-    { year: "2025 (Q2)", milestone: "Marketplace Launch & Talent Embassy Program Kick-off" },
-    { year: "2026 (Q1)", milestone: "Public Launch & IDN Token Generation Event (TGE)" },
-    { year: "2027 (Q1)", milestone: "Transition to DAO Governance Model" }
+    { year: "2025 (Phase 1 \"Digital\")", milestone: "Platform Launch & Marketplace Launch for (proof, sell & buy)" },
+    { year: "2026 (Phase 2 \"Digital\")", milestone: "First Airdrop & IDN Token Generation Event (TGE)" },
+    { year: "2027 (Phase 3 \"Fiscal\")", milestone: "Talent Embassy Program Kick-off" }
   ],
 
   utilityTableTitle: 'Token Utility in the Ecosystem',
@@ -121,6 +120,35 @@ const enTranslations = {
   s11Content: 'IDN is not just a token — it’s the economic layer for human innovation, connecting creators, investors, and institutions in a borderless market where talent becomes a universally tradable asset.',
   disclaimer: 'Disclaimer: This document is for informational purposes only. IDN is a utility token, not an investment contract or security. Features are subject to change based on regulatory and technical factors.',
   s11Tagline: 'Mission: To make innovation a global right, not a privilege.',
+  cerebrumTitle: 'Gold Token — Cerebrum Awards',
+  cerebrumContent: `The Cerebrum Awards represent the highest honor in the MindVaultIP ecosystem — a decentralized recognition of creativity, innovation, and human impact.
+
+Unlike traditional awards determined by institutions or venture judges, the Cerebrum Awards are decided collectively by the global community through transparent on-chain voting and merit-based impact criteria.
+
+These awards are not merely financial tokens; they are symbols of human excellence, forever encoded on the blockchain — a testament that creativity and originality transcend borders, wealth, and power.
+
+\nVision and Philosophy\n\nIn a world where recognition is often controlled by institutions and point systems, the Cerebrum Awards redefine the meaning of achievement. Here, the only true currency is creative impact.
+Every artist, inventor, and thinker deserves to be seen, heard, and rewarded — regardless of origin, language, or location. The Cerebrum Token merges human creativity with blockchain transparency to form the first borderless reward system.
+
+\nAward Structure\n\nLevel\tName\tToken\tAward Value (IDN)\tDescription
+\n+🥇\tCerebrum Award\tCA-GOLD\t1000 IDN\tSymbol of ultimate creative contribution. Granted to individuals whose work delivers measurable global impact in art, science, or innovation.
+
+\n+Annual Allocation and Provision\n\nEach year, 10% of the total talent award pool is allocated to the Cerebrum Awards, ensuring rarity and symbolic value.
+Initial Allocation:\n100 Cerebrum Awards (CA-GOLD) are included within the 2,000,000 public airdrop tokens.
+Each awarded token is unique and non-fungible, containing metadata that records:\n- Public proof hash of the creator\n- Community verification record\n- Category and year of award\n\n>The main value is recognition — not speculation.
+
+\n+Selection and Governance\n\nAward recipients are determined by collective intelligence, not committees:\n1. Public Nominations – Any registered MindVaultIP creator may nominate others.\n2. AI-Assisted Filtering – An AI council verifies authenticity and impact without bias.\n3. Community Voting – IDN holders vote transparently and on-chain.\n4. On-Chain Multiplication – Winners receive a unique Cerebrum Token (NFT + IDN award).\n\n+Every decision is public, immutable, and governed by the people — not institutions.
+
+\n+Founder’s Gift Edition (Genesis Awards)\n\nThe first 100 Cerebrum Awards (Genesis Edition) will be personally awarded by the Founder as part of the Founder’s Gift — the inaugural Cerebrum Tokens.
+This will be the only founder-selected round in the history of MindVaultIP. All future awards will be entirely DAO-governed.
+\n+> “This time, the choice is human — guided by the heart, not algorithms. After that, the world decides.” — Founder, MindVaultIP
+
+\n+Technical Model\n\nType: Soulbound NFT (ERC-721S) linked to IDN Reward Token\nAssociated Asset: Fungible IDN Token\nIssuance Reference: DAO Smart Contract (Post-2027)\nVoting System: On-Chain Proof of Influence (PoI)\nRecord Layer: Base Network\nTimestamp: Each award is verifiably time-stamped on-chain
+
+\n+Philosophical Summary\n\n> “Cerebrum Awards are not given – they are earned by the minds that drive humanity forward.”\n\nIt is not a badge of wealth; it is a witness — proof that creativity, courage, and participation are the true currencies of our civilization.
+
+\n+Endnote\n\nThe Cerebrum Award is the spiritual and symbolic heart of MindVaultIP — the golden seal of creative truth, signed not by judges, but by the universe.
+`,
   govFundTitle: '"Governments Fund":',
   govFundContent: 'Used to build and support physical “Talent Embassy” mini-cities across the globe — creative hubs for innovators and artists who require real-world space to exhibit, develop, and collaborate on their talents. Co-funded by investors and public bodies, these centres link the digital MindVaultIP ecosystem with real-world talent infrastructure.',
   airdropTitle: 'Public Distribution (Proof-Based Airdrop)',
