@@ -41,9 +41,14 @@ window.addEventListener('unhandledrejection', (event) => {
 setupWeb3Modal()
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <WagmiProvider config={wagmiConfig}>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </WagmiProvider>
+  <div>
+    <div className="p-4 bg-orange-600 text-white">
+      🎯 MAIN.JSX LOADED - If you see this, main.jsx is working!
+    </div>
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </WagmiProvider>
+  </div>
 ) 

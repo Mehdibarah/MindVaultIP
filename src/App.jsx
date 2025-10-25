@@ -12,10 +12,15 @@ function App() {
   }, []);
 
   return (
-    <WalletProvider>
-      <Pages />
-      <Toaster />
-    </WalletProvider>
+    <div>
+      <div className="p-4 bg-purple-600 text-white">
+        🚀 APP COMPONENT LOADED - If you see this, App is working!
+      </div>
+      <WalletProvider>
+        <Pages />
+        <Toaster />
+      </WalletProvider>
+    </div>
   )
 }
 
