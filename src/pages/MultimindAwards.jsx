@@ -152,7 +152,7 @@ export default function MultimindAwards() {
     
     try {
       console.log('🗑️ Deleting award:', award);
-      const result = await deleteAward(award.image_url, connectedAddress);
+      const result = await deleteAward(award.id, connectedAddress);
       
       if (result.ok) {
         toast({

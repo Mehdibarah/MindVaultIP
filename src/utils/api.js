@@ -64,9 +64,9 @@ export async function fetchAwards() {
   }
 }
 
-export async function deleteAward(key, walletAddress) {
+export async function deleteAward(awardId, walletAddress) {
   try {
-    const res = await fetch(`${API_BASE}/api/awards?key=${encodeURIComponent(key)}`, {
+    const res = await fetch(`${API_BASE}/api/awards?id=${encodeURIComponent(awardId)}`, {
       method: "DELETE",
       headers: {
         "X-Wallet-Address": walletAddress,

@@ -100,10 +100,10 @@ async function handleDeleteAward(req, res) {
       return res.status(500).json({ error: "Server configuration error" });
     }
 
-    // Get key parameter from query string
-    const { key } = req.query;
-    if (!key) {
-      return res.status(400).json({ error: "Missing key parameter" });
+    // Get id parameter from query string
+    const { id } = req.query;
+    if (!id) {
+      return res.status(400).json({ error: "Missing id parameter" });
     }
 
     // Get wallet address from headers (should be set by frontend)
@@ -128,15 +128,15 @@ async function handleDeleteAward(req, res) {
     // Create Supabase client
     const supabase = createClient(ENV.SUPABASE_URL, ENV.SUPABASE_SERVICE_KEY);
 
-    // First, get the award to find the file path
+    // First, get the award by id
     const { data: award, error: fetchError } = await supabase
       .from('awards')
       .select('*')
-      .eq('image_url', key)
+      .eq('id', id)
       .single();
 
     if (fetchError || !award) {
-      console.error("awards.delete.notfound", { key, error: fetchError?.message });
+      console.error("awards.delete.notfound", { id, error: fetchError?.message });
       return res.status(404).json({ error: "Award not found" });
     }
 
@@ -173,8 +173,7 @@ async function handleDeleteAward(req, res) {
 
     console.log("awards.delete.success", { 
       id: award.id,
-      title: award.title,
-      key: key
+      title: award.title
     });
 
     // Return success response
@@ -183,8 +182,7 @@ async function handleDeleteAward(req, res) {
       success: true,
       deleted: {
         id: award.id,
-        title: award.title,
-        key: key
+        title: award.title
       },
       timestamp: new Date().toISOString()
     });
