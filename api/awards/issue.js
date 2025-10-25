@@ -98,8 +98,8 @@ async function uploadFile(file, filename) {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
   let detectedMimeType = file.mimetype;
   
-  // If mimetype is missing, try to detect from filename
-  if (!detectedMimeType && file.originalFilename) {
+  // If mimetype is missing or is generic, try to detect from filename
+  if ((!detectedMimeType || detectedMimeType === 'application/octet-stream') && file.originalFilename) {
     const ext = file.originalFilename.toLowerCase().split('.').pop();
     const mimeMap = {
       'jpg': 'image/jpeg',
@@ -112,13 +112,39 @@ async function uploadFile(file, filename) {
     detectedMimeType = mimeMap[ext];
   }
   
-  // If still no mimetype, default to application/octet-stream
+  // If still no valid mimetype, try to detect from file content (basic check)
+  if (!detectedMimeType || detectedMimeType === 'application/octet-stream') {
+    try {
+      const fileBuffer = fs.readFileSync(file.filepath || file.path);
+      const header = fileBuffer.slice(0, 10);
+      
+      // Check file signatures
+      if (header[0] === 0xFF && header[1] === 0xD8) {
+        detectedMimeType = 'image/jpeg';
+      } else if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47) {
+        detectedMimeType = 'image/png';
+      } else if (header[0] === 0x47 && header[1] === 0x49 && header[2] === 0x46) {
+        detectedMimeType = 'image/gif';
+      } else if (header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46) {
+        detectedMimeType = 'image/webp';
+      } else if (header[0] === 0x25 && header[1] === 0x50 && header[2] === 0x44 && header[3] === 0x46) {
+        detectedMimeType = 'application/pdf';
+      }
+    } catch (e) {
+      console.warn('Could not detect file type from content:', e.message);
+    }
+  }
+  
+  // If still no valid mimetype, default to application/octet-stream but allow it
   if (!detectedMimeType) {
     detectedMimeType = 'application/octet-stream';
   }
 
-  if (!allowedTypes.includes(detectedMimeType)) {
-    throw new Error(`File type ${detectedMimeType} not allowed. Allowed types: ${allowedTypes.join(', ')}`);
+  // Allow application/octet-stream for unknown file types
+  const allowedTypesWithGeneric = [...allowedTypes, 'application/octet-stream'];
+  
+  if (!allowedTypesWithGeneric.includes(detectedMimeType)) {
+    throw new Error(`File type ${detectedMimeType} not allowed. Allowed types: ${allowedTypes.join(', ')}, or unknown files`);
   }
 
   // Validate file size
