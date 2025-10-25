@@ -5,9 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:host": "vite --host",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:curl": "curl -F walletAddress=$FOUNDER_ADDRESS -F image=@./public/test.jpg $VITE_API_URL/api/awards/issue -v",
+    "health": "curl $VITE_API_URL/api/health/config && echo && curl $VITE_API_URL/api/health/ping"
   },
   "dependencies": {
     "@base44/sdk": "^0.1.2",
@@ -50,6 +53,7 @@
     "embla-carousel-react": "^8.5.2",
     "ethers": "^5.8.0",
     "express": "^5.1.0",
+    "formidable": "^3.5.4",
     "framer-motion": "^12.4.7",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.475.0",
