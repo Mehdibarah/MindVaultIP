@@ -82,20 +82,20 @@ function PagesContent() {
       <Ping />
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/Dashboard" element={<Dashboard />} />
-        <Route path="/CreateProof" element={<CreateProof />} />
-        <Route path="/Landing" element={<Landing />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/createproof" element={<CreateProof />} />
+        <Route path="/landing" element={<Landing />} />
         <Route
-          path="/AIMentor"
+          path="/aimentor"
           element={
             <FeatureGuard feature={FEATURE_AI_MENTOR}>
               <AIMentor />
             </FeatureGuard>
           }
         />
-        <Route path="/Gallery" element={<Gallery />} />
+        <Route path="/gallery" element={<Gallery />} />
         <Route
-          path="/Marketplace"
+          path="/marketplace"
           element={
             <FeatureGuard feature={FEATURE_MARKETPLACE}>
               <Marketplace />
@@ -103,7 +103,7 @@ function PagesContent() {
           }
         />
         <Route
-          path="/AdminPanel"
+          path="/adminpanel"
           element={
             <FeatureGuard feature={FEATURE_ADMIN_PANEL}>
               <AdminPanel />
@@ -111,35 +111,35 @@ function PagesContent() {
           }
         />
         <Route
-          path="/MindVaultIPWhitePaper"
+          path="/mindvaultipwhitepaper"
           element={<MindVaultIPWhitePaper />}
         />
-        <Route path="/TermsOfService" element={<TermsOfService />} />
-        <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
-        <Route path="/WalletSecurity" element={<WalletSecurity />} />
+        <Route path="/termsofservice" element={<TermsOfService />} />
+        <Route path="/privacypolicy" element={<PrivacyPolicy />} />
+        <Route path="/walletsecurity" element={<WalletSecurity />} />
         <Route
-          path="/Messages"
+          path="/messages"
           element={
             <FeatureGuard feature={FEATURE_MESSAGES}>
               <Messages />
             </FeatureGuard>
           }
         />
-        <Route path="/Chat" element={<Chat />} />
-        <Route path="/MultimindAwards" element={<MultimindAwards />} />
-        <Route path="/MultimindAwards/new" element={<NewAward />} />
-        <Route path="/Watchlist" element={<Watchlist />} />
+        <Route path="/chat" element={<Chat />} />
+        <Route path="/multimindawards" element={<MultimindAwards />} />
+        <Route path="/multimindawards/new" element={<NewAward />} />
+        <Route path="/watchlist" element={<Watchlist />} />
         <Route
-          path="/ExpertDashboard"
+          path="/expertdashboard"
           element={
             <FeatureGuard feature={FEATURE_EXPERT_DASHBOARD}>
               <ExpertDashboard />
             </FeatureGuard>
           }
         />
-        <Route path="/ApplyExpert" element={<ApplyExpert />} />
-        <Route path="/Profile" element={<Profile />} />
-        <Route path="/Signup" element={<Signup />} />
+        <Route path="/applyexpert" element={<ApplyExpert />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/signup" element={<Signup />} />
 
         {/* برای مسیرهای ناشناخته */}
         <Route path="*" element={<Navigate to="/" replace />} />

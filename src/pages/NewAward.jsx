@@ -76,19 +76,19 @@ export default function NewAward() {
                 variant: "destructive",
                 duration: 4000
               });
-              navigate('/MultimindAwards');
+              navigate('/multimindawards');
             }
           } else {
             // No wallet connected, redirect to awards page
-            navigate('/MultimindAwards');
+            navigate('/multimindawards');
           }
         } else {
           // No ethereum provider, redirect to awards page
-          navigate('/MultimindAwards');
+          navigate('/multimindawards');
         }
       } catch (error) {
         console.log('Error checking founder status:', error);
-        navigate('/MultimindAwards');
+        navigate('/multimindawards');
       }
     };
 
@@ -217,7 +217,7 @@ export default function NewAward() {
       toast({ title: 'Award created', description: 'Multimind Award successfully created', duration: 4000 });
       
       // Navigate back to awards list with refresh flag
-      navigate('/MultimindAwards', { 
+      navigate('/multimindawards', { 
         state: { 
           refresh: true
         } 
@@ -299,7 +299,7 @@ export default function NewAward() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center gap-4 mb-6">
             <button
-              onClick={() => navigate('/MultimindAwards')}
+              onClick={() => navigate('/multimindawards')}
               className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -496,7 +496,7 @@ export default function NewAward() {
           <div className="flex gap-4 justify-end">
             <button
               type="button"
-              onClick={() => navigate('/MultimindAwards')}
+              onClick={() => navigate('/multimindawards')}
               className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
             >
               Cancel
