@@ -135,6 +135,8 @@ export default function NewAward() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    let timeoutId;
+    
     try {
       if (!formData.title.trim()) {
         toast({ title: 'Missing title', description: 'Please provide an award title' });
@@ -148,8 +150,19 @@ export default function NewAward() {
         toast({ title: 'Invalid address', description: 'Recipient address is invalid' });
         return;
       }
+      if (!file && !compressedFile) {
+        toast({ title: 'Missing file', description: 'Please select an image file' });
+        return;
+      }
 
       setLoading(true);
+      
+      // Set a timeout to prevent infinite loading
+      timeoutId = setTimeout(() => {
+        console.warn('⚠️ Award creation timeout - resetting loading state');
+        setLoading(false);
+      }, 60000); // 60 seconds timeout
+      
       const id = `award_${Date.now()}`;
       const timestamp = new Date().toISOString();
       const message = JSON.stringify({ id, title: formData.title, category: formData.category, recipient: formData.recipient || '', timestamp });
@@ -209,9 +222,18 @@ export default function NewAward() {
         status: err.message?.includes('HTTP') ? err.message.split(' ')[1] : 'unknown',
         message: err.message || String(err) 
       });
-      toast({ title: 'Error', description: err.message || String(err) });
+      toast({ 
+        title: 'Error', 
+        description: err.message || String(err),
+        variant: "destructive"
+      });
     } finally {
+      // Clear timeout and reset loading state
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       setLoading(false);
+      console.log('🔄 Loading state reset to false - button should be enabled');
     }
   };
 
