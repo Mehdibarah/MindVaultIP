@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Plus, Award, Calendar, User, RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { fetchAwards } from '@/utils/api';
 
 const FOUNDER_ADDRESS = (import.meta.env.VITE_FOUNDER_ADDRESS || '').toLowerCase();
 
@@ -81,27 +82,47 @@ export default function MultimindAwards() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchAwards = async () => {
+  const fetchAwardsFromServer = async () => {
+    try {
+      console.log('🔄 Fetching awards from server...');
+      const result = await fetchAwards();
+      
+      if (result.ok && result.awards) {
+        console.log('✅ Awards fetched successfully:', result.awards.length);
+        setAwards(result.awards);
+      } else {
+        console.error('❌ Failed to fetch awards:', result);
+        setAwards([]);
+      }
+    } catch (err) {
+      console.error('❌ Error fetching awards from server:', err);
+      // Fallback to Supabase if API fails
+      await fetchAwardsFromSupabase();
+    }
+  };
+
+  const fetchAwardsFromSupabase = async () => {
     if (!supabase) {
       setAwards([]);
-      setLoading(false);
       return;
     }
     
     try {
+      console.log('🔄 Fetching awards from Supabase (fallback)...');
       const { data, error } = await supabase
         .from('awards')
         .select('id,title,category,recipient,recipient_name,recipient_email,timestamp,image_url,summary')
         .order('timestamp', { ascending: false });
       
       if (error) {
-        console.error('Failed to load awards', error);
+        console.error('❌ Failed to load awards from Supabase:', error);
         setAwards([]);
       } else {
+        console.log('✅ Awards fetched from Supabase:', data?.length || 0);
         setAwards(data || []);
       }
     } catch (err) {
-      console.error('Error fetching awards:', err);
+      console.error('❌ Error fetching awards from Supabase:', err);
       setAwards([]);
     }
   };
@@ -111,8 +132,10 @@ export default function MultimindAwards() {
     
     async function loadAwards() {
       setLoading(true);
-      await fetchAwards();
-      setLoading(false);
+      await fetchAwardsFromServer();
+      if (mounted) {
+        setLoading(false);
+      }
     }
 
     loadAwards();
@@ -122,10 +145,12 @@ export default function MultimindAwards() {
   // Handle refresh from navigation state
   useEffect(() => {
     if (location.state?.refresh) {
-      // If we have new award data, add it immediately to the list
-      if (location.state?.newAward) {
-        console.log('🎉 Adding new award to list immediately:', location.state.newAward);
-        setAwards(prev => [location.state.newAward, ...prev]);
+      console.log('🔄 Handling refresh from navigation state');
+      
+      // Always fetch fresh data from server after award creation
+      setRefreshing(true);
+      fetchAwardsFromServer().finally(() => {
+        setRefreshing(false);
         
         // Show success toast
         toast({
@@ -135,20 +160,7 @@ export default function MultimindAwards() {
         
         // Clear the refresh state
         navigate(location.pathname, { replace: true, state: {} });
-      } else {
-        // Fallback: fetch from server
-        setRefreshing(true);
-        fetchAwards().finally(() => {
-          setRefreshing(false);
-          // Show success toast
-          toast({
-            title: "Award Added Successfully!",
-            description: "Your new award has been added to the list.",
-          });
-          // Clear the refresh state
-          navigate(location.pathname, { replace: true, state: {} });
-        });
-      }
+      });
     }
   }, [location.state, navigate, location.pathname, toast]);
 
@@ -156,7 +168,7 @@ export default function MultimindAwards() {
   useEffect(() => {
     const interval = setInterval(() => {
       if (!refreshing && !loading) {
-        fetchAwards();
+        fetchAwardsFromServer();
       }
     }, 30000); // 30 seconds
 
@@ -194,7 +206,7 @@ export default function MultimindAwards() {
               <button 
                 onClick={() => {
                   setRefreshing(true);
-                  fetchAwards().finally(() => setRefreshing(false));
+                  fetchAwardsFromServer().finally(() => setRefreshing(false));
                 }}
                 disabled={refreshing}
                 className="px-4 py-3 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-white rounded-lg transition-all duration-300 flex items-center gap-2"

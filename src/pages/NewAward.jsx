@@ -215,11 +215,10 @@ export default function NewAward() {
       
       toast({ title: 'Award created', description: 'Multimind Award successfully created' });
       
-      // Navigate back to awards list with refresh flag and award data
+      // Navigate back to awards list with refresh flag
       navigate('/MultimindAwards', { 
         state: { 
-          refresh: true,
-          newAward: result.item // Pass the new award data
+          refresh: true
         } 
       });
       
