@@ -189,7 +189,7 @@ export default function MultimindAwards() {
               {/* Only show New Award button for founder */}
               {isFounder && (
                 <button 
-                  onClick={() => navigate('/awards/new')} 
+                  onClick={() => navigate('/MultimindAwards/new')} 
                   className="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white rounded-lg transition-all duration-300 flex items-center gap-2"
                 >
                   <Plus className="w-5 h-5" />
@@ -268,7 +268,7 @@ export default function MultimindAwards() {
                 </p>
                 {isFounder && (
                   <button 
-                    onClick={() => navigate('/awards/new')} 
+                    onClick={() => navigate('/MultimindAwards/new')} 
                     className="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white rounded-lg transition-all duration-300 flex items-center gap-2 mx-auto"
                   >
                     <Plus className="w-5 h-5" />

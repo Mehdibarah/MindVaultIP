@@ -1,5 +1,5 @@
 import Layout from "./Layout.jsx";
-import Ping from "@/components/Ping"; // 👈 این خط اضافه شد
+import Ping from "@/components/Ping";
 
 import Dashboard from "./Dashboard";
 import CreateProof from "./CreateProof";
@@ -13,11 +13,15 @@ import TermsOfService from "./TermsOfService";
 import PrivacyPolicy from "./PrivacyPolicy";
 import WalletSecurity from "./WalletSecurity";
 import Messages from "./Messages";
+import Chat from "./Chat";
+import MultimindAwards from "./MultimindAwards";
+import NewAward from "./NewAward";
 import Watchlist from "./Watchlist";
 import ExpertDashboard from "./ExpertDashboard";
 import ApplyExpert from "./ApplyExpert";
 import Profile from "./Profile";
 import Signup from "./Signup";
+
 
 import {
   BrowserRouter as Router,
@@ -48,6 +52,9 @@ const PAGES = {
   PrivacyPolicy: PrivacyPolicy,
   WalletSecurity: WalletSecurity,
   Messages: Messages,
+  Chat: Chat,
+  MultimindAwards: MultimindAwards,
+  NewAward: NewAward,
   Watchlist: Watchlist,
   ExpertDashboard: ExpertDashboard,
   ApplyExpert: ApplyExpert,
@@ -71,7 +78,7 @@ function PagesContent() {
 
   return (
     <Layout currentPageName={currentPage}>
-      <Ping /> {/* 👈 اینجا اضافه شد تا اتصال تست بشه */}
+      <Ping />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/Dashboard" element={<Dashboard />} />
@@ -117,6 +124,9 @@ function PagesContent() {
             </FeatureGuard>
           }
         />
+        <Route path="/Chat" element={<Chat />} />
+        <Route path="/MultimindAwards" element={<MultimindAwards />} />
+        <Route path="/MultimindAwards/new" element={<NewAward />} />
         <Route path="/Watchlist" element={<Watchlist />} />
         <Route
           path="/ExpertDashboard"
@@ -129,6 +139,9 @@ function PagesContent() {
         <Route path="/ApplyExpert" element={<ApplyExpert />} />
         <Route path="/Profile" element={<Profile />} />
         <Route path="/Signup" element={<Signup />} />
+
+        {/* برای مسیرهای ناشناخته */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
   );

@@ -162,18 +162,18 @@ export default function NewAward() {
 
       // Debug logging
       console.log('🔧 Debug Info:');
-      console.log('  FOUNDER env var:', FOUNDER);
-      console.log('  FOUNDER length:', FOUNDER.length);
+      console.log('  FOUNDER env var:', FOUNDER_ADDRESS);
+      console.log('  FOUNDER length:', FOUNDER_ADDRESS.length);
       console.log('  Signer address:', signerAddress);
       console.log('  Signer address (lowercase):', signerAddress.toLowerCase());
-      console.log('  Comparison result:', signerAddress.toLowerCase() === FOUNDER);
+      console.log('  Comparison result:', signerAddress.toLowerCase() === FOUNDER_ADDRESS);
 
-      if (!FOUNDER) {
+      if (!FOUNDER_ADDRESS) {
         throw new Error('FOUNDER address not configured on server');
       }
 
-      if (signerAddress.toLowerCase() !== FOUNDER) {
-        throw new Error(`Only founder wallet can create awards. Expected: ${FOUNDER}, Got: ${signerAddress.toLowerCase()}. Please connect the correct wallet or contact support.`);
+      if (signerAddress.toLowerCase() !== FOUNDER_ADDRESS) {
+        throw new Error(`Only founder wallet can create awards. Expected: ${FOUNDER_ADDRESS}, Got: ${signerAddress.toLowerCase()}. Please connect the correct wallet or contact support.`);
       }
 
       const signature = await signer.signMessage(message);
@@ -242,7 +242,7 @@ export default function NewAward() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-yellow-400 text-sm">
-                  <strong>Debug Info:</strong> FOUNDER address: <code className="bg-gray-800 px-2 py-1 rounded">{FOUNDER || 'NOT SET'}</code>
+                  <strong>Debug Info:</strong> FOUNDER address: <code className="bg-gray-800 px-2 py-1 rounded">{FOUNDER_ADDRESS || 'NOT SET'}</code>
                 </p>
                 <p className="text-yellow-400 text-sm mt-1">
                   <strong>Note:</strong> You must connect the wallet with this exact address to create awards.
