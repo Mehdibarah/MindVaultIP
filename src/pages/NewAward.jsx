@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { useToast } from '@/components/ui/use-toast';
-import { ArrowLeft, Upload, User, Award, Calendar, FileText } from 'lucide-react';
+import { ArrowLeft, Upload, User, Award, Calendar, FileText, Shield } from 'lucide-react';
 import { postForm } from '@/utils/api';
 import HealthCheck from '@/components/HealthCheck';
 
-const FOUNDER = (import.meta.env.VITE_FOUNDER_ADDRESS || '').toLowerCase();
+const FOUNDER_ADDRESS = (import.meta.env.VITE_FOUNDER_ADDRESS || '').toLowerCase();
 
 async function compressImage(file, {maxW=1600, maxH=1600, quality=0.8} = {}) {
   return new Promise((resolve, reject) => {
@@ -55,6 +55,44 @@ export default function NewAward() {
   const [compressedFile, setCompressedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [connectedAddress, setConnectedAddress] = useState(null);
+  const [isFounder, setIsFounder] = useState(false);
+
+  // Check if user is founder
+  useEffect(() => {
+    const checkFounderStatus = async () => {
+      try {
+        if (typeof window !== 'undefined' && window.ethereum) {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts.length > 0) {
+            const address = accounts[0].toLowerCase();
+            setConnectedAddress(address);
+            const founderStatus = address === FOUNDER_ADDRESS;
+            setIsFounder(founderStatus);
+            
+            if (!founderStatus) {
+              toast({
+                title: "Access Denied",
+                description: "Only the founder can create awards.",
+                variant: "destructive"
+              });
+              navigate('/MultimindAwards');
+            }
+          } else {
+            // No wallet connected, redirect to awards page
+            navigate('/MultimindAwards');
+          }
+        } else {
+          // No ethereum provider, redirect to awards page
+          navigate('/MultimindAwards');
+        }
+      } catch (error) {
+        console.log('Error checking founder status:', error);
+        navigate('/MultimindAwards');
+      }
+    };
+
+    checkFounderStatus();
+  }, [navigate, toast]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -181,6 +219,21 @@ export default function NewAward() {
     <div className="min-h-screen bg-[#0B1220] text-white">
       {/* Health Check */}
       <HealthCheck />
+      
+      {/* Founder Status Indicator */}
+      {isFounder && connectedAddress && (
+        <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 mb-6">
+          <div className="flex items-center gap-3">
+            <Shield className="w-5 h-5 text-green-400" />
+            <div>
+              <h3 className="text-green-300 font-semibold">Founder Access Granted</h3>
+              <p className="text-green-200 text-sm">
+                Connected as: {connectedAddress.slice(0, 6)}...{connectedAddress.slice(-4)}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Debug Info - Remove this in production */}
       {process.env.NODE_ENV === 'development' && (

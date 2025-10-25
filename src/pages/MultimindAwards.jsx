@@ -4,7 +4,52 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Plus, Award, Calendar, User, RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
-const FOUNDER = (import.meta.env.VITE_FOUNDER_ADDRESS || '').toLowerCase();
+const FOUNDER_ADDRESS = (import.meta.env.VITE_FOUNDER_ADDRESS || '').toLowerCase();
+
+// Hook to check if current user is founder
+function useIsFounder() {
+  const [isFounder, setIsFounder] = useState(false);
+  const [connectedAddress, setConnectedAddress] = useState(null);
+
+  useEffect(() => {
+    // Check if user has connected wallet and is founder
+    const checkFounderStatus = async () => {
+      try {
+        if (typeof window !== 'undefined' && window.ethereum) {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts.length > 0) {
+            const address = accounts[0].toLowerCase();
+            setConnectedAddress(address);
+            setIsFounder(address === FOUNDER_ADDRESS);
+          }
+        }
+      } catch (error) {
+        console.log('No wallet connected or error checking founder status');
+      }
+    };
+
+    checkFounderStatus();
+
+    // Listen for account changes
+    if (typeof window !== 'undefined' && window.ethereum) {
+      const handleAccountsChanged = (accounts) => {
+        if (accounts.length > 0) {
+          const address = accounts[0].toLowerCase();
+          setConnectedAddress(address);
+          setIsFounder(address === FOUNDER_ADDRESS);
+        } else {
+          setConnectedAddress(null);
+          setIsFounder(false);
+        }
+      };
+
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      return () => window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+    }
+  }, []);
+
+  return { isFounder, connectedAddress };
+}
 
 function AwardCard({ award }) {
   const getRecipientDisplay = () => {
@@ -31,6 +76,7 @@ export default function MultimindAwards() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { isFounder, connectedAddress } = useIsFounder();
   const [awards, setAwards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -90,6 +136,17 @@ export default function MultimindAwards() {
     }
   }, [location.state, navigate, location.pathname, toast]);
 
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!refreshing && !loading) {
+        fetchAwards();
+      }
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [refreshing, loading]);
+
   return (
     <div className="min-h-screen bg-[#0B1220] text-white">
       {/* Header */}
@@ -107,6 +164,14 @@ export default function MultimindAwards() {
                 <p className="text-xl text-gray-300 mt-2">
                   Recognizing excellence and innovation in the MindVaultIP community
                 </p>
+                {connectedAddress && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${isFounder ? 'bg-green-500' : 'bg-blue-500'}`}></div>
+                    <span className="text-sm text-gray-400">
+                      {isFounder ? 'Founder Mode' : 'Viewer Mode'} • {connectedAddress.slice(0, 6)}...{connectedAddress.slice(-4)}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -121,13 +186,16 @@ export default function MultimindAwards() {
                 <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
-              <button 
-                onClick={() => navigate('/awards/new')} 
-                className="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white rounded-lg transition-all duration-300 flex items-center gap-2"
-              >
-                <Plus className="w-5 h-5" />
-                New Award
-              </button>
+              {/* Only show New Award button for founder */}
+              {isFounder && (
+                <button 
+                  onClick={() => navigate('/awards/new')} 
+                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white rounded-lg transition-all duration-300 flex items-center gap-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  New Award
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -195,14 +263,18 @@ export default function MultimindAwards() {
                   <Award className="w-12 h-12 text-gray-600" />
                 </div>
                 <h3 className="text-2xl font-semibold text-gray-400 mb-2">No Awards Yet</h3>
-                <p className="text-gray-500 mb-6">Be the first to create a Multimind Award</p>
-                <button 
-                  onClick={() => navigate('/awards/new')} 
-                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white rounded-lg transition-all duration-300 flex items-center gap-2 mx-auto"
-                >
-                  <Plus className="w-5 h-5" />
-                  Create First Award
-                </button>
+                <p className="text-gray-500 mb-6">
+                  {isFounder ? 'Be the first to create a Multimind Award' : 'No awards have been created yet'}
+                </p>
+                {isFounder && (
+                  <button 
+                    onClick={() => navigate('/awards/new')} 
+                    className="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white rounded-lg transition-all duration-300 flex items-center gap-2 mx-auto"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Create First Award
+                  </button>
+                )}
               </div>
             ) : (
               <>
