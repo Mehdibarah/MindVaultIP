@@ -110,7 +110,7 @@ function dispatch(action) {
   });
 }
 
-function toast({ ...props }) {
+function toast({ duration = 4000, ...props }) {
   const id = genId();
 
   const update = (props) =>
@@ -127,12 +127,20 @@ function toast({ ...props }) {
     toast: {
       ...props,
       id,
+      duration,
       open: true,
       onOpenChange: (open) => {
         if (!open) dismiss();
       },
     },
   });
+
+  // Auto-dismiss after duration
+  if (duration > 0) {
+    setTimeout(() => {
+      dismiss();
+    }, duration);
+  }
 
   return {
     id,
@@ -158,6 +166,7 @@ function useToast() {
     ...state,
     toast,
     dismiss: (toastId) => dispatch({ type: actionTypes.DISMISS_TOAST, toastId }),
+    dismissAll: () => dispatch({ type: actionTypes.DISMISS_TOAST }),
   };
 }
 

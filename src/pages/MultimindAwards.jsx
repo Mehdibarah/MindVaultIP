@@ -139,7 +139,8 @@ export default function MultimindAwards() {
       toast({
         title: "Error",
         description: "Wallet not connected",
-        variant: "destructive"
+        variant: "destructive",
+        duration: 4000
       });
       return;
     }
@@ -158,6 +159,7 @@ export default function MultimindAwards() {
         toast({
           title: "Award Deleted",
           description: `"${award.title}" has been successfully deleted.`,
+          duration: 4000
         });
         console.log('✅ Award deleted successfully:', result);
       } else {
@@ -172,7 +174,8 @@ export default function MultimindAwards() {
       toast({
         title: "Delete Failed",
         description: error.message || "Failed to delete award. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
+        duration: 4000
       });
     } finally {
       setDeleting(false);
@@ -253,6 +256,7 @@ export default function MultimindAwards() {
         toast({
           title: "Award Added Successfully!",
           description: "Your new award has been added to the list.",
+          duration: 4000
         });
         
         // Clear the refresh state

@@ -73,7 +73,8 @@ export default function NewAward() {
               toast({
                 title: "Access Denied",
                 description: "Only the founder can create awards.",
-                variant: "destructive"
+                variant: "destructive",
+                duration: 4000
               });
               navigate('/MultimindAwards');
             }
@@ -118,7 +119,7 @@ export default function NewAward() {
   const checkWalletConnection = async () => {
     try {
       if (!window?.ethereum) {
-        toast({ title: 'Error', description: 'Wallet not available' });
+        toast({ title: 'Error', description: 'Wallet not available', duration: 4000 });
         return;
       }
       const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -126,9 +127,9 @@ export default function NewAward() {
       const signer = provider.getSigner();
       const address = await signer.getAddress();
       setConnectedAddress(address);
-      toast({ title: 'Wallet Connected', description: `Address: ${address}` });
+      toast({ title: 'Wallet Connected', description: `Address: ${address}`, duration: 4000 });
     } catch (err) {
-      toast({ title: 'Error', description: err.message });
+      toast({ title: 'Error', description: err.message, duration: 4000 });
     }
   };
 
@@ -139,19 +140,19 @@ export default function NewAward() {
     
     try {
       if (!formData.title.trim()) {
-        toast({ title: 'Missing title', description: 'Please provide an award title' });
+        toast({ title: 'Missing title', description: 'Please provide an award title', duration: 4000 });
         return;
       }
       if (!formData.recipient && !formData.recipientName) {
-        toast({ title: 'Missing recipient', description: 'Please provide recipient info' });
+        toast({ title: 'Missing recipient', description: 'Please provide recipient info', duration: 4000 });
         return;
       }
       if (formData.recipient && !ethers.utils.isAddress(formData.recipient)) {
-        toast({ title: 'Invalid address', description: 'Recipient address is invalid' });
+        toast({ title: 'Invalid address', description: 'Recipient address is invalid', duration: 4000 });
         return;
       }
       if (!file && !compressedFile) {
-        toast({ title: 'Missing file', description: 'Please select an image file' });
+        toast({ title: 'Missing file', description: 'Please select an image file', duration: 4000 });
         return;
       }
 
@@ -213,7 +214,7 @@ export default function NewAward() {
       
       console.log('✅ Award created successfully:', result);
       
-      toast({ title: 'Award created', description: 'Multimind Award successfully created' });
+      toast({ title: 'Award created', description: 'Multimind Award successfully created', duration: 4000 });
       
       // Navigate back to awards list with refresh flag
       navigate('/MultimindAwards', { 
@@ -231,7 +232,8 @@ export default function NewAward() {
       toast({ 
         title: 'Error', 
         description: err.message || String(err),
-        variant: "destructive"
+        variant: "destructive",
+        duration: 4000
       });
     } finally {
       // Clear timeout and reset loading state

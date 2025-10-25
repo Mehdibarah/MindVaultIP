@@ -3,6 +3,7 @@ import Pages from "@/pages/index.jsx"
 import { Toaster } from "@/components/ui/toaster"
 import { WalletProvider } from "@/components/wallet/WalletContext"
 import { initializeI18n } from "@/utils/i18nConfig"
+import ToastDismisser from "@/components/ToastDismisser"
 import { useEffect } from "react"
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
 
   return (
     <WalletProvider>
+      <ToastDismisser />
       <Pages />
       <Toaster />
     </WalletProvider>
