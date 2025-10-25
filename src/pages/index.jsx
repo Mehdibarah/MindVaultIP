@@ -67,15 +67,49 @@ function _getCurrentPage(url) {
   if (url.endsWith("/")) url = url.slice(0, -1);
   let urlLastPart = url.split("/").pop();
   if (urlLastPart.includes("?")) urlLastPart = urlLastPart.split("?")[0];
-  const pageName = Object.keys(PAGES).find(
-    (page) => page.toLowerCase() === urlLastPart.toLowerCase()
-  );
-  return pageName || Object.keys(PAGES)[0];
+  
+  // Handle special cases for nested routes
+  if (urlLastPart === "new" && url.includes("/multimindawards/")) {
+    return "NewAward";
+  }
+  
+  // Map lowercase route paths to PascalCase page names
+  const routeToPageMap = {
+    "dashboard": "Dashboard",
+    "createproof": "CreateProof", 
+    "landing": "Landing",
+    "aimentor": "AIMentor",
+    "gallery": "Gallery",
+    "marketplace": "Marketplace",
+    "adminpanel": "AdminPanel",
+    "mindvaultipwhitepaper": "MindVaultIPWhitePaper",
+    "termsofservice": "TermsOfService",
+    "privacypolicy": "PrivacyPolicy",
+    "walletsecurity": "WalletSecurity",
+    "messages": "Messages",
+    "chat": "Chat",
+    "multimindawards": "MultimindAwards",
+    "watchlist": "Watchlist",
+    "expertdashboard": "ExpertDashboard",
+    "applyexpert": "ApplyExpert",
+    "profile": "Profile",
+    "signup": "Signup"
+  };
+  
+  const pageName = routeToPageMap[urlLastPart.toLowerCase()];
+  return pageName || "Landing";
 }
 
 function PagesContent() {
   const location = useLocation();
   const currentPage = _getCurrentPage(location.pathname);
+  
+  // Debug logging
+  console.log('🔍 Router Debug:', {
+    pathname: location.pathname,
+    currentPage: currentPage,
+    timestamp: new Date().toISOString()
+  });
 
   return (
     <Layout currentPageName={currentPage}>
@@ -83,6 +117,7 @@ function PagesContent() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/test" element={<div className="p-8 text-white">Test Route Working!</div>} />
         <Route path="/createproof" element={<CreateProof />} />
         <Route path="/landing" element={<Landing />} />
         <Route
