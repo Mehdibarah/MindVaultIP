@@ -1,5 +1,6 @@
 import Layout from "./Layout.jsx";
 import Ping from "@/components/Ping";
+import ToastDismisser from "@/components/ToastDismisser";
 
 import Dashboard from "./Dashboard";
 import CreateProof from "./CreateProof";
@@ -150,6 +151,7 @@ function PagesContent() {
 export default function Pages() {
   return (
     <Router>
+      <ToastDismisser />
       <PagesContent />
     </Router>
   );
