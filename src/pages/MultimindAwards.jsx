@@ -122,17 +122,33 @@ export default function MultimindAwards() {
   // Handle refresh from navigation state
   useEffect(() => {
     if (location.state?.refresh) {
-      setRefreshing(true);
-      fetchAwards().finally(() => {
-        setRefreshing(false);
+      // If we have new award data, add it immediately to the list
+      if (location.state?.newAward) {
+        console.log('🎉 Adding new award to list immediately:', location.state.newAward);
+        setAwards(prev => [location.state.newAward, ...prev]);
+        
         // Show success toast
         toast({
           title: "Award Added Successfully!",
           description: "Your new award has been added to the list.",
         });
+        
         // Clear the refresh state
         navigate(location.pathname, { replace: true, state: {} });
-      });
+      } else {
+        // Fallback: fetch from server
+        setRefreshing(true);
+        fetchAwards().finally(() => {
+          setRefreshing(false);
+          // Show success toast
+          toast({
+            title: "Award Added Successfully!",
+            description: "Your new award has been added to the list.",
+          });
+          // Clear the refresh state
+          navigate(location.pathname, { replace: true, state: {} });
+        });
+      }
     }
   }, [location.state, navigate, location.pathname, toast]);
 

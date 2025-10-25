@@ -211,10 +211,17 @@ export default function NewAward() {
 
       if (!result.ok && !result.success) throw new Error(result.error);
       
+      console.log('✅ Award created successfully:', result);
+      
       toast({ title: 'Award created', description: 'Multimind Award successfully created' });
       
-      // Navigate back to awards list with refresh flag
-      navigate('/MultimindAwards', { state: { refresh: true } });
+      // Navigate back to awards list with refresh flag and award data
+      navigate('/MultimindAwards', { 
+        state: { 
+          refresh: true,
+          newAward: result.item // Pass the new award data
+        } 
+      });
       
     } catch (err) {
       console.error('createAward.error', { 

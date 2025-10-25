@@ -342,14 +342,16 @@ export default async function handler(req, res) {
       hasImage: !!imageUrl 
     });
 
-    // Return success response
+    // Return success response with exact format requested
     return res.status(201).json({ 
       ok: true, 
       success: true,
-      award: insertedAward,
-      meta: {
-        filename: file?.originalFilename || null,
-        imageUrl: imageUrl
+      item: {
+        ...insertedAward,
+        url: imageUrl,
+        pathname: imageUrl,
+        uploadedAt: insertedAward.timestamp || new Date().toISOString(),
+        size: file?.size || 0
       }
     });
 
