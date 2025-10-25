@@ -117,7 +117,8 @@ function PagesContent() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/test" element={<div className="p-8 text-white">Test Route Working!</div>} />
+        <Route path="/test" element={<div className="p-8 text-white bg-green-600">✅ Test Route Working!</div>} />
+        <Route path="/simple" element={<div className="p-8 text-white bg-blue-600">🔵 Simple Route Working!</div>} />
         <Route path="/createproof" element={<CreateProof />} />
         <Route path="/landing" element={<Landing />} />
         <Route
@@ -176,7 +177,7 @@ function PagesContent() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/signup" element={<Signup />} />
 
-        {/* برای مسیرهای ناشناخته */}
+        {/* برای مسیرهای ناشناخته - باید در انتها باشد */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
