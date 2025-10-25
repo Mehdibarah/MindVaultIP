@@ -27,7 +27,8 @@ function parseForm(req) {
     maxFileSize: ENV.MAX_UPLOAD_BYTES,
     keepExtensions: true,
     uploadDir: '/tmp', // Use temp directory for Vercel
-    createDirsFromUploads: true
+    createDirsFromUploads: true,
+    fileWriteStreamHandler: false // Keep files in memory for Vercel
   });
   
   return new Promise((resolve, reject) => {
@@ -38,7 +39,16 @@ function parseForm(req) {
       } else {
         console.log('formidable.parse.success', { 
           fields: Object.keys(fields), 
-          files: Object.keys(files) 
+          files: Object.keys(files),
+          fileDetails: Object.keys(files).map(key => ({
+            key,
+            mimetype: files[key].mimetype,
+            size: files[key].size,
+            originalFilename: files[key].originalFilename,
+            filepath: files[key].filepath,
+            path: files[key].path,
+            buffer: files[key].buffer ? 'present' : 'missing'
+          }))
         });
         resolve({ fields, files });
       }
@@ -113,11 +123,21 @@ async function uploadFile(file, filename) {
   }
   
   // If still no valid mimetype, try to detect from file content (basic check)
-  if ((!detectedMimeType || detectedMimeType === 'application/octet-stream') && (file.filepath || file.path)) {
+  if (!detectedMimeType || detectedMimeType === 'application/octet-stream') {
     try {
-      const filePath = file.filepath || file.path;
-      if (filePath && typeof filePath === 'string') {
-        const fileBuffer = fs.readFileSync(filePath);
+      let fileBuffer;
+      
+      // Try to get buffer for signature detection
+      if (file.buffer) {
+        fileBuffer = file.buffer;
+      } else if (file.filepath || file.path) {
+        const filePath = file.filepath || file.path;
+        if (filePath && typeof filePath === 'string') {
+          fileBuffer = fs.readFileSync(filePath);
+        }
+      }
+      
+      if (fileBuffer && fileBuffer.length > 0) {
         const header = fileBuffer.slice(0, 10);
         
         // Check file signatures
@@ -157,18 +177,37 @@ async function uploadFile(file, filename) {
     throw new Error(`File too large. Maximum size: ${maxMB}MB, received: ${fileMB}MB`);
   }
 
-  // Read file as buffer for Vercel serverless compatibility
+  // Get file buffer - try different sources for Vercel compatibility
   let fileBuffer;
   try {
-    const filePath = file.filepath || file.path;
-    if (!filePath || typeof filePath !== 'string') {
-      throw new Error('File path is not available');
+    // First try to get buffer directly (Vercel serverless)
+    if (file.buffer) {
+      fileBuffer = file.buffer;
+      console.log('Using file.buffer (Vercel serverless mode)');
+    } 
+    // Fallback to reading from file path
+    else if (file.filepath || file.path) {
+      const filePath = file.filepath || file.path;
+      if (typeof filePath === 'string') {
+        fileBuffer = fs.readFileSync(filePath);
+        console.log('Using fs.readFileSync from path');
+      } else {
+        throw new Error('File path is not a string');
+      }
+    } 
+    // Last resort - try to read from file object
+    else if (file.toBuffer) {
+      fileBuffer = await file.toBuffer();
+      console.log('Using file.toBuffer()');
+    } else {
+      throw new Error('No file buffer or path available');
     }
-    fileBuffer = fs.readFileSync(filePath);
   } catch (readError) {
     console.error('file.read.error', { 
       filepath: file.filepath, 
-      path: file.path, 
+      path: file.path,
+      hasBuffer: !!file.buffer,
+      hasToBuffer: !!file.toBuffer,
       error: readError.message 
     });
     throw new Error(`Failed to read uploaded file: ${readError.message}`);
