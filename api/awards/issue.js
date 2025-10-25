@@ -2,7 +2,6 @@
 export const runtime = 'nodejs';
 
 import formidable from "formidable";
-import fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
 import { ethers } from 'ethers';
 import { ENV, assertEnv, logEnvStatus } from '../_utils/env.js';
@@ -20,37 +19,59 @@ const supabase = ENV.SUPABASE_URL && ENV.SUPABASE_SERVICE_KEY
   ? createClient(ENV.SUPABASE_URL, ENV.SUPABASE_SERVICE_KEY) 
   : null;
 
-// Parse multipart form data
+// Parse multipart form data using formidable
 function parseForm(req) {
-  const form = formidable({ 
-    multiples: false, 
-    maxFileSize: ENV.MAX_UPLOAD_BYTES,
-    keepExtensions: true,
-    uploadDir: '/tmp', // Use temp directory for Vercel
-    createDirsFromUploads: true,
-    fileWriteStreamHandler: false // Keep files in memory for Vercel
-  });
-  
   return new Promise((resolve, reject) => {
+    const form = formidable({
+      maxFileSize: ENV.MAX_UPLOAD_BYTES,
+      keepExtensions: true,
+      allowEmptyFiles: false,
+      minFileSize: 0
+    });
+    
     form.parse(req, (err, fields, files) => {
       if (err) {
         console.error('formidable.parse.error', { message: err.message });
         reject(err);
       } else {
+        // Convert formidable files to our format
+        const processedFiles = {};
+        Object.keys(files).forEach(key => {
+          const file = files[key];
+          if (Array.isArray(file)) {
+            file.forEach(f => {
+              if (f.buffer) {
+                processedFiles[key] = {
+                  buffer: f.buffer,
+                  mimetype: f.mimetype,
+                  size: f.size,
+                  originalFilename: f.originalFilename
+                };
+              }
+            });
+          } else if (file.buffer) {
+            processedFiles[key] = {
+              buffer: file.buffer,
+              mimetype: file.mimetype,
+              size: file.size,
+              originalFilename: file.originalFilename
+            };
+          }
+        });
+        
         console.log('formidable.parse.success', { 
           fields: Object.keys(fields), 
-          files: Object.keys(files),
-          fileDetails: Object.keys(files).map(key => ({
+          files: Object.keys(processedFiles),
+          fileDetails: Object.keys(processedFiles).map(key => ({
             key,
-            mimetype: files[key].mimetype,
-            size: files[key].size,
-            originalFilename: files[key].originalFilename,
-            filepath: files[key].filepath,
-            path: files[key].path,
-            buffer: files[key].buffer ? 'present' : 'missing'
+            mimetype: processedFiles[key].mimetype,
+            size: processedFiles[key].size,
+            originalFilename: processedFiles[key].originalFilename,
+            hasBuffer: !!processedFiles[key].buffer
           }))
         });
-        resolve({ fields, files });
+        
+        resolve({ fields, files: processedFiles });
       }
     });
   });
@@ -88,21 +109,9 @@ async function uploadFile(file, filename) {
       mimetype: file.mimetype,
       size: file.size,
       originalFilename: file.originalFilename,
-      filepath: file.filepath,
-      path: file.path
+      hasBuffer: !!file.buffer
     }
   });
-
-  // Get file size from buffer if not available
-  let fileSize = file.size;
-  if (!fileSize && file.filepath) {
-    try {
-      const stats = fs.statSync(file.filepath);
-      fileSize = stats.size;
-    } catch (e) {
-      console.warn('Could not get file size from stats:', e.message);
-    }
-  }
 
   // Validate file type - be more flexible with mimetype detection
   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
@@ -123,35 +132,21 @@ async function uploadFile(file, filename) {
   }
   
   // If still no valid mimetype, try to detect from file content (basic check)
-  if (!detectedMimeType || detectedMimeType === 'application/octet-stream') {
+  if ((!detectedMimeType || detectedMimeType === 'application/octet-stream') && file.buffer) {
     try {
-      let fileBuffer;
+      const header = file.buffer.slice(0, 10);
       
-      // Try to get buffer for signature detection
-      if (file.buffer) {
-        fileBuffer = file.buffer;
-      } else if (file.filepath || file.path) {
-        const filePath = file.filepath || file.path;
-        if (filePath && typeof filePath === 'string') {
-          fileBuffer = fs.readFileSync(filePath);
-        }
-      }
-      
-      if (fileBuffer && fileBuffer.length > 0) {
-        const header = fileBuffer.slice(0, 10);
-        
-        // Check file signatures
-        if (header[0] === 0xFF && header[1] === 0xD8) {
-          detectedMimeType = 'image/jpeg';
-        } else if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47) {
-          detectedMimeType = 'image/png';
-        } else if (header[0] === 0x47 && header[1] === 0x49 && header[2] === 0x46) {
-          detectedMimeType = 'image/gif';
-        } else if (header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46) {
-          detectedMimeType = 'image/webp';
-        } else if (header[0] === 0x25 && header[1] === 0x50 && header[2] === 0x44 && header[3] === 0x46) {
-          detectedMimeType = 'application/pdf';
-        }
+      // Check file signatures
+      if (header[0] === 0xFF && header[1] === 0xD8) {
+        detectedMimeType = 'image/jpeg';
+      } else if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47) {
+        detectedMimeType = 'image/png';
+      } else if (header[0] === 0x47 && header[1] === 0x49 && header[2] === 0x46) {
+        detectedMimeType = 'image/gif';
+      } else if (header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46) {
+        detectedMimeType = 'image/webp';
+      } else if (header[0] === 0x25 && header[1] === 0x50 && header[2] === 0x44 && header[3] === 0x46) {
+        detectedMimeType = 'application/pdf';
       }
     } catch (e) {
       console.warn('Could not detect file type from content:', e.message);
@@ -171,52 +166,21 @@ async function uploadFile(file, filename) {
   }
 
   // Validate file size
-  if (fileSize && fileSize > ENV.MAX_UPLOAD_BYTES) {
+  if (file.size && file.size > ENV.MAX_UPLOAD_BYTES) {
     const maxMB = Math.round(ENV.MAX_UPLOAD_BYTES / 1024 / 1024);
-    const fileMB = Math.round(fileSize / 1024 / 1024);
+    const fileMB = Math.round(file.size / 1024 / 1024);
     throw new Error(`File too large. Maximum size: ${maxMB}MB, received: ${fileMB}MB`);
   }
 
-  // Get file buffer - try different sources for Vercel compatibility
-  let fileBuffer;
-  try {
-    // First try to get buffer directly (Vercel serverless)
-    if (file.buffer) {
-      fileBuffer = file.buffer;
-      console.log('Using file.buffer (Vercel serverless mode)');
-    } 
-    // Fallback to reading from file path
-    else if (file.filepath || file.path) {
-      const filePath = file.filepath || file.path;
-      if (typeof filePath === 'string') {
-        fileBuffer = fs.readFileSync(filePath);
-        console.log('Using fs.readFileSync from path');
-      } else {
-        throw new Error('File path is not a string');
-      }
-    } 
-    // Last resort - try to read from file object
-    else if (file.toBuffer) {
-      fileBuffer = await file.toBuffer();
-      console.log('Using file.toBuffer()');
-    } else {
-      throw new Error('No file buffer or path available');
-    }
-  } catch (readError) {
-    console.error('file.read.error', { 
-      filepath: file.filepath, 
-      path: file.path,
-      hasBuffer: !!file.buffer,
-      hasToBuffer: !!file.toBuffer,
-      error: readError.message 
-    });
-    throw new Error(`Failed to read uploaded file: ${readError.message}`);
+  // Use file buffer directly (busboy provides this)
+  if (!file.buffer) {
+    throw new Error('File buffer is not available');
   }
 
   // Upload to Supabase
   const { error: uploadError } = await supabase.storage
     .from(ENV.SUPABASE_BUCKET)
-    .upload(filename, fileBuffer, {
+    .upload(filename, file.buffer, {
       cacheControl: '3600',
       upsert: false,
       contentType: detectedMimeType,
