@@ -116,10 +116,11 @@ function PagesContent() {
       <div className="p-4 bg-yellow-600 text-black">
         🔍 Debug: Current Path: {location.pathname} | Current Page: {currentPage}
       </div>
-      <Layout currentPageName={currentPage}>
-        <Ping />
-        <Routes>
-        <Route path="/" element={<Landing />} />
+      <div className="p-4 bg-red-600 text-white">
+        🚨 ROUTES TEST - If you see this, routing is working!
+      </div>
+      <Routes>
+        <Route path="/" element={<div className="p-8 text-white bg-blue-600">🏠 HOME PAGE - Landing Component</div>} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/test" element={<div className="p-8 text-white bg-green-600">✅ Test Route Working!</div>} />
         <Route path="/simple" element={<div className="p-8 text-white bg-blue-600">🔵 Simple Route Working!</div>} />
@@ -147,9 +148,8 @@ function PagesContent() {
         <Route path="/signup" element={<Signup />} />
 
         {/* برای مسیرهای ناشناخته - باید در انتها باشد */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Layout>
+        <Route path="*" element={<div className="p-8 text-white bg-red-600">❌ 404 - Route not found: {location.pathname}</div>} />
+      </Routes>
     </div>
   );
 }
