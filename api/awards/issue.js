@@ -113,22 +113,25 @@ async function uploadFile(file, filename) {
   }
   
   // If still no valid mimetype, try to detect from file content (basic check)
-  if (!detectedMimeType || detectedMimeType === 'application/octet-stream') {
+  if ((!detectedMimeType || detectedMimeType === 'application/octet-stream') && (file.filepath || file.path)) {
     try {
-      const fileBuffer = fs.readFileSync(file.filepath || file.path);
-      const header = fileBuffer.slice(0, 10);
-      
-      // Check file signatures
-      if (header[0] === 0xFF && header[1] === 0xD8) {
-        detectedMimeType = 'image/jpeg';
-      } else if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47) {
-        detectedMimeType = 'image/png';
-      } else if (header[0] === 0x47 && header[1] === 0x49 && header[2] === 0x46) {
-        detectedMimeType = 'image/gif';
-      } else if (header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46) {
-        detectedMimeType = 'image/webp';
-      } else if (header[0] === 0x25 && header[1] === 0x50 && header[2] === 0x44 && header[3] === 0x46) {
-        detectedMimeType = 'application/pdf';
+      const filePath = file.filepath || file.path;
+      if (filePath && typeof filePath === 'string') {
+        const fileBuffer = fs.readFileSync(filePath);
+        const header = fileBuffer.slice(0, 10);
+        
+        // Check file signatures
+        if (header[0] === 0xFF && header[1] === 0xD8) {
+          detectedMimeType = 'image/jpeg';
+        } else if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47) {
+          detectedMimeType = 'image/png';
+        } else if (header[0] === 0x47 && header[1] === 0x49 && header[2] === 0x46) {
+          detectedMimeType = 'image/gif';
+        } else if (header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46) {
+          detectedMimeType = 'image/webp';
+        } else if (header[0] === 0x25 && header[1] === 0x50 && header[2] === 0x44 && header[3] === 0x46) {
+          detectedMimeType = 'application/pdf';
+        }
       }
     } catch (e) {
       console.warn('Could not detect file type from content:', e.message);
@@ -157,8 +160,17 @@ async function uploadFile(file, filename) {
   // Read file as buffer for Vercel serverless compatibility
   let fileBuffer;
   try {
-    fileBuffer = fs.readFileSync(file.filepath || file.path);
+    const filePath = file.filepath || file.path;
+    if (!filePath || typeof filePath !== 'string') {
+      throw new Error('File path is not available');
+    }
+    fileBuffer = fs.readFileSync(filePath);
   } catch (readError) {
+    console.error('file.read.error', { 
+      filepath: file.filepath, 
+      path: file.path, 
+      error: readError.message 
+    });
     throw new Error(`Failed to read uploaded file: ${readError.message}`);
   }
 
