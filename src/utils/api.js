@@ -64,6 +64,31 @@ export async function fetchAwards() {
   }
 }
 
+export async function deleteAward(key, walletAddress) {
+  try {
+    const res = await fetch(`${API_BASE}/api/awards?key=${encodeURIComponent(key)}`, {
+      method: "DELETE",
+      headers: {
+        "X-Wallet-Address": walletAddress,
+      },
+      mode: "cors",
+      credentials: "omit",
+    });
+    
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`HTTP ${res.status} ${text}`);
+    }
+    
+    const result = await res.json();
+    console.log('🗑️ Award deleted successfully:', result);
+    return result;
+  } catch (error) {
+    console.error('awards.delete.error', { scope: 'deleteAward', error: error.message });
+    throw error;
+  }
+}
+
 // Health check functions
 export async function checkHealth() {
   try {

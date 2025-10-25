@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Plus, Award, Calendar, User, RefreshCw } from 'lucide-react';
+import { Plus, Award, Calendar, User, RefreshCw, Trash2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { fetchAwards } from '@/utils/api';
+import { fetchAwards, deleteAward } from '@/utils/api';
 
 const FOUNDER_ADDRESS = (import.meta.env.VITE_FOUNDER_ADDRESS || '').toLowerCase();
 
@@ -52,24 +52,66 @@ function useIsFounder() {
   return { isFounder, connectedAddress };
 }
 
-function AwardCard({ award }) {
-  const getRecipientDisplay = () => {
-    if (award.recipient_name) {
-      return award.recipient_name;
-    } else if (award.recipient) {
-      return `${award.recipient.slice(0, 6)}...${award.recipient.slice(-4)}`;
-    } else {
-      return 'Unknown recipient';
-    }
+function AwardCard({ award, isFounder, onDelete }) {
+  const handleDeleteClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDelete(award);
   };
 
   return (
-    <a href={`/verify/${award.id}`} className="block p-4 border rounded hover:shadow">
-      <h3 className="font-bold">{award.title}</h3>
-      <p className="text-sm text-gray-400">{award.category}</p>
-      <p className="text-xs mt-2">Recipient: {getRecipientDisplay()}</p>
-      <p className="text-xs text-gray-500">{new Date(award.timestamp).toLocaleString()}</p>
-    </a>
+    <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden hover:border-blue-500/50 transition-all duration-300 group relative">
+      <Link to={`/verify/${award.id}`} className="block">
+        {award.image_url ? (
+          <div className="relative">
+            <img 
+              src={award.image_url} 
+              alt={award.title} 
+              className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" 
+            />
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-300" />
+          </div>
+        ) : (
+          <div className="w-full h-48 bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
+            <Award className="w-16 h-16 text-gray-600" />
+          </div>
+        )}
+        <div className="p-6">
+          <h3 className="text-xl font-bold text-white mb-2">{award.title}</h3>
+          {award.summary && (
+            <p className="text-sm text-gray-400 mb-3 line-clamp-2">{award.summary}</p>
+          )}
+          <div className="flex items-center gap-4 text-sm text-gray-400 mb-3">
+            {award.category && (
+              <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full">
+                {award.category}
+              </span>
+            )}
+            <span className="flex items-center gap-1">
+              <Calendar className="w-4 h-4" />
+              {new Date(award.timestamp).toLocaleDateString()}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-300">
+            <User className="w-4 h-4" />
+            <span>
+              {award.recipient_name || (award.recipient ? `${String(award.recipient).slice(0,6)}...${String(award.recipient).slice(-4)}` : 'Unknown')}
+            </span>
+          </div>
+        </div>
+      </Link>
+      
+      {/* Delete button - only for founder */}
+      {isFounder && (
+        <button
+          onClick={handleDeleteClick}
+          className="absolute top-3 right-3 p-2 bg-red-600/90 hover:bg-red-700 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg"
+          title="Delete Award"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -81,6 +123,61 @@ export default function MultimindAwards() {
   const [awards, setAwards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteAward = async (award) => {
+    // Confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to delete the award "${award.title}"?\n\nThis action cannot be undone.`
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+
+    if (!connectedAddress) {
+      toast({
+        title: "Error",
+        description: "Wallet not connected",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setDeleting(true);
+    
+    // Optimistic update - remove from UI immediately
+    const originalAwards = [...awards];
+    setAwards(prev => prev.filter(a => a.id !== award.id));
+    
+    try {
+      console.log('🗑️ Deleting award:', award);
+      const result = await deleteAward(award.image_url, connectedAddress);
+      
+      if (result.ok) {
+        toast({
+          title: "Award Deleted",
+          description: `"${award.title}" has been successfully deleted.`,
+        });
+        console.log('✅ Award deleted successfully:', result);
+      } else {
+        throw new Error(result.error || 'Delete failed');
+      }
+    } catch (error) {
+      console.error('❌ Failed to delete award:', error);
+      
+      // Rollback optimistic update
+      setAwards(originalAwards);
+      
+      toast({
+        title: "Delete Failed",
+        description: error.message || "Failed to delete award. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const fetchAwardsFromServer = async () => {
     try {
@@ -246,31 +343,12 @@ export default function MultimindAwards() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {awards.slice(0, 8).map(award => (
-                <div key={award.id} className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden hover:border-blue-500/50 transition-all duration-300 group">
-                  <Link to={`/verify/${award.id}`} className="block">
-                    {award.image_url ? (
-                      <div className="relative">
-                        <img 
-                          src={award.image_url} 
-                          alt={award.title} 
-                          className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300" 
-                        />
-                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-300" />
-                      </div>
-                    ) : (
-                      <div className="w-full h-32 bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
-                        <Award className="w-8 h-8 text-gray-600" />
-                      </div>
-                    )}
-                    <div className="p-4">
-                      <h3 className="font-semibold text-white text-sm mb-1 line-clamp-2">{award.title}</h3>
-                      <div className="flex items-center justify-between text-xs text-gray-400">
-                        <span>{award.category || 'General'}</span>
-                        <span>{new Date(award.timestamp).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  </Link>
-                </div>
+                <AwardCard 
+                  key={award.id} 
+                  award={award} 
+                  isFounder={isFounder} 
+                  onDelete={handleDeleteAward}
+                />
               ))}
             </div>
           </div>
@@ -312,47 +390,12 @@ export default function MultimindAwards() {
                     <h2 className="text-2xl font-bold text-white mb-6">All Awards</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                       {awards.map(a => (
-                        <div key={a.id} className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden hover:border-blue-500/50 transition-all duration-300 group">
-                          <Link to={`/verify/${a.id}`} className="block">
-                            {a.image_url ? (
-                              <div className="relative">
-                                <img 
-                                  src={a.image_url} 
-                                  alt={a.title} 
-                                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" 
-                                />
-                                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-300" />
-                              </div>
-                            ) : (
-                              <div className="w-full h-48 bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
-                                <Award className="w-16 h-16 text-gray-600" />
-                              </div>
-                            )}
-                            <div className="p-6">
-                              <h3 className="text-xl font-bold text-white mb-2">{a.title}</h3>
-                              {a.summary && (
-                                <p className="text-sm text-gray-400 mb-3 line-clamp-2">{a.summary}</p>
-                              )}
-                              <div className="flex items-center gap-4 text-sm text-gray-400 mb-3">
-                                {a.category && (
-                                  <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full">
-                                    {a.category}
-                                  </span>
-                                )}
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="w-4 h-4" />
-                                  {new Date(a.timestamp).toLocaleDateString()}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm text-gray-300">
-                                <User className="w-4 h-4" />
-                                <span>
-                                  {a.recipient_name || (a.recipient ? `${String(a.recipient).slice(0,6)}...${String(a.recipient).slice(-4)}` : 'Unknown')}
-                                </span>
-                              </div>
-                            </div>
-                          </Link>
-                        </div>
+                        <AwardCard 
+                          key={a.id} 
+                          award={a} 
+                          isFounder={isFounder} 
+                          onDelete={handleDeleteAward}
+                        />
                       ))}
                     </div>
                   </div>
