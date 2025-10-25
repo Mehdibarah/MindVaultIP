@@ -112,40 +112,23 @@ function PagesContent() {
   });
 
   return (
-    <Layout currentPageName={currentPage}>
-      <Ping />
-      <Routes>
+    <div>
+      <div className="p-4 bg-yellow-600 text-black">
+        🔍 Debug: Current Path: {location.pathname} | Current Page: {currentPage}
+      </div>
+      <Layout currentPageName={currentPage}>
+        <Ping />
+        <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/test" element={<div className="p-8 text-white bg-green-600">✅ Test Route Working!</div>} />
         <Route path="/simple" element={<div className="p-8 text-white bg-blue-600">🔵 Simple Route Working!</div>} />
         <Route path="/createproof" element={<CreateProof />} />
         <Route path="/landing" element={<Landing />} />
-        <Route
-          path="/aimentor"
-          element={
-            <FeatureGuard feature={FEATURE_AI_MENTOR}>
-              <AIMentor />
-            </FeatureGuard>
-          }
-        />
+        <Route path="/aimentor" element={<AIMentor />} />
         <Route path="/gallery" element={<Gallery />} />
-        <Route
-          path="/marketplace"
-          element={
-            <FeatureGuard feature={FEATURE_MARKETPLACE}>
-              <Marketplace />
-            </FeatureGuard>
-          }
-        />
-        <Route
-          path="/adminpanel"
-          element={
-            <FeatureGuard feature={FEATURE_ADMIN_PANEL}>
-              <AdminPanel />
-            </FeatureGuard>
-          }
-        />
+        <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="/adminpanel" element={<AdminPanel />} />
         <Route
           path="/mindvaultipwhitepaper"
           element={<MindVaultIPWhitePaper />}
@@ -153,34 +136,21 @@ function PagesContent() {
         <Route path="/termsofservice" element={<TermsOfService />} />
         <Route path="/privacypolicy" element={<PrivacyPolicy />} />
         <Route path="/walletsecurity" element={<WalletSecurity />} />
-        <Route
-          path="/messages"
-          element={
-            <FeatureGuard feature={FEATURE_MESSAGES}>
-              <Messages />
-            </FeatureGuard>
-          }
-        />
+        <Route path="/messages" element={<Messages />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/multimindawards" element={<MultimindAwards />} />
         <Route path="/multimindawards/new" element={<NewAward />} />
         <Route path="/watchlist" element={<Watchlist />} />
-        <Route
-          path="/expertdashboard"
-          element={
-            <FeatureGuard feature={FEATURE_EXPERT_DASHBOARD}>
-              <ExpertDashboard />
-            </FeatureGuard>
-          }
-        />
+        <Route path="/expertdashboard" element={<ExpertDashboard />} />
         <Route path="/applyexpert" element={<ApplyExpert />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/signup" element={<Signup />} />
 
         {/* برای مسیرهای ناشناخته - باید در انتها باشد */}
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Layout>
+        </Routes>
+      </Layout>
+    </div>
   );
 }
 
