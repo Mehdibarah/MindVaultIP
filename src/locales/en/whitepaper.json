@@ -1,0 +1,372 @@
+{
+  "hero": {
+    "title": "MindVaultIP White Paper",
+    "subtitle": "A Decentralized Framework for Global Innovation and Intellectual Property",
+    "badges": {
+      "baseNetwork": "Built on Base Network",
+      "aiPowered": "AI-Powered",
+      "decentralized": "Decentralized"
+    }
+  },
+  "sections": {
+    "abstract": {
+      "title": "Abstract",
+      "content1": "MindVaultIP is a decentralized platform that transforms human creativity into a borderless, verifiable, and tradable asset. Built on the Base Network and powered by Artificial Intelligence, it allows anyone, anywhere, to register, validate, and monetize their inventions, ideas, and discoveries on the blockchain.",
+      "content2": "Through its native token — Ideon Cerebrum (IDN) — the platform creates an inclusive economy where innovation is rewarded and intellectual ownership becomes eternal."
+    },
+    "dualProblem": {
+      "title": "The Dual Problem MindVaultIP Solves",
+      "innovationInequality": {
+        "title": "The Innovation Inequality Problem",
+        "content1": "The global intellectual property (IP) system is outdated. It rewards only those who can afford legal processes, international filings, and expensive lawyers — leaving billions of creative minds without a voice.",
+        "content2": "MindVaultIP changes that. By using blockchain and AI, every human — regardless of wealth, location, or education — can protect, validate, and trade their ideas instantly and transparently.",
+        "highlight": "Innovation becomes a right, not a privilege."
+      },
+      "rigidCrypto": {
+        "title": "The Rigid Crypto Economy Problem",
+        "content1": "While cryptocurrencies like Bitcoin revolutionized finance, they remain technically rigid and socially limited. Only those with computing power and technical knowledge can participate in mining, and the supply cap of 21 million coins leaves no flexibility for future global growth.",
+        "content2": "There is also no direct link between real human value (creativity, ideas, or innovation) and token value.",
+        "highlight": "Ideon Cerebrum (IDN) is designed to fix this. It's not mined by machines, but earned by creativity."
+      }
+    },
+    "solution": {
+      "title": "The MindVaultIP Solution",
+      "intro": "MindVaultIP eliminates the traditional barriers of intellectual property through three technological pillars:",
+      "pillars": {
+        "blockchain": {
+          "title": "Blockchain Proof",
+          "description": "Every uploaded file is hashed and registered on-chain via the Base Network, creating a permanent, immutable proof of ownership."
+        },
+        "ai": {
+          "title": "AI-Powered Validation",
+          "description": "The AI Council evaluates each proof for novelty, originality, and commercial potential, producing unbiased, transparent results."
+        },
+        "marketplace": {
+          "title": "Decentralized Marketplace",
+          "description": "Approved proofs can be listed and traded directly between creators and investors using IDN tokens, forming a self-sustaining innovation economy."
+        }
+      }
+    },
+    "token": {
+      "title": "The Ideon Cerebrum (IDN) Token",
+      "intro": "Ideon Cerebrum (IDN) is the native utility and governance token powering the MindVaultIP ecosystem. It represents the measurable value of human imagination and creativity.",
+      "utilitiesTitle": "Core Utilities:",
+      "utilities": {
+        "transaction": {
+          "title": "Transaction Medium",
+          "description": "Exclusive currency for marketplace transactions and proof registrations"
+        },
+        "rewards": {
+          "title": "Innovation Rewards",
+          "description": "IDN rewards are issued for validated proofs"
+        },
+        "governance": {
+          "title": "Governance Power",
+          "description": "Token holders will vote on major proposals and protocol upgrades"
+        },
+        "premium": {
+          "title": "Premium Access",
+          "description": "Used for expert reviews, AI analysis, and Talent Embassy benefits"
+        }
+      }
+    },
+    "tokenomics": {
+      "title": "Tokenomics & Distribution",
+      "table": {
+        "headers": {
+          "category": "Category",
+          "tokens": "Tokens",
+          "percentage": "%",
+          "description": "Description"
+        },
+        "data": {
+          "founder": "Founder",
+          "talentEmbassy": "Talent Embassy Fund",
+          "mindVaultIP": "MindVaultIP (digital)",
+          "publicAirdrop": "Public Free Distribution (Airdrop)",
+          "support": "Support & Partnerships",
+          "investors": "Investors & Governments",
+          "totalSupply": "Total Supply"
+        },
+        "descriptions": {
+          "founder": "For founder",
+          "talentEmbassy": "For global Talent Embassies (physical)",
+          "mindVaultIP": "For innovators and creatives",
+          "publicAirdrop": "Rewarding early adopters and creators",
+          "support": "Grants for humanitarian partners and NGOs",
+          "investors": "Funding innovation hubs and physical talent centers"
+        }
+      }
+    },
+    "futureIssuance": {
+      "title": "Future Issuance",
+      "intro": "Every 20 years, up to 10,000,000 new IDN tokens may be issued:",
+      "platform": "50% → MindVaultIP Platform",
+      "platformDesc": "Scaling, R&D, and infrastructure",
+      "embassy": "50% → Talent Embassy Network",
+      "embassyDesc": "Education and expansion",
+      "conclusion": "This ensures long-term flexibility while maintaining economic balance."
+    },
+    "vesting": {
+      "title": "Vesting Schedule",
+      "table": {
+        "headers": {
+          "group": "Group",
+          "startYear": "Start Year",
+          "releaseRate": "Release Rate",
+          "notes": "Notes"
+        },
+        "data": {
+          "founder": "Founder",
+          "investors": "Investors & Governments",
+          "platform": "MindVaultIP Platform Reserve",
+          "embassy": "Talent Embassy Fund",
+          "public": "Public & Partnerships"
+        },
+        "notes": {
+          "founder": "Fully vested after 5 years",
+          "investors": "Supports long-term alignment",
+          "platform": "For operations and liquidity",
+          "embassy": "Unlocks with embassy expansions",
+          "public": "Distributed during launch"
+        }
+      }
+    },
+    "governance": {
+      "title": "Governance Model (DAO)",
+      "intro": "Beginning in 2027, MindVaultIP will transition to a Decentralized Autonomous Organization (DAO). Holders of IDN will govern decisions regarding:",
+      "items": {
+        "protocol": "Protocol and ecosystem upgrades",
+        "treasury": "Treasury and fund allocation",
+        "embassy": "Talent Embassy expansion",
+        "ai": "AI Council development"
+      }
+    },
+    "security": {
+      "title": "Security & Transparency",
+      "items": {
+        "privacy": "Only cryptographic hashes are stored on-chain for user privacy.",
+        "verifiable": "Every transaction is verifiable and traceable.",
+        "opensource": "Smart contracts are open-source and auditable on Base Network.",
+        "accountability": "All AI validation logs are timestamped for accountability."
+      }
+    },
+    "roadmap": {
+      "title": "Roadmap",
+      "phases": {
+        "phase1": {
+          "year": "2025",
+          "title": "Phase 1 'Digital'",
+          "description": "Platform Launch & Marketplace Launch (proof, sell & buy)"
+        },
+        "phase2": {
+          "year": "2026",
+          "title": "Phase 2 'Digital'",
+          "description": "First Airdrop & IDN Token Generation Event (TGE)"
+        },
+        "phase3": {
+          "year": "2030",
+          "title": "Phase 3 'Physical — Talent Embassy Kick-off'",
+          "description": "Talent Embassy Program Kick-off"
+        }
+      }
+    },
+    "utility": {
+      "title": "Token Utility in the Ecosystem",
+      "table": {
+        "headers": {
+          "utility": "Utility",
+          "purpose": "Purpose"
+        },
+        "data": {
+          "registration": "Proof Registration Fees",
+          "marketplace": "Marketplace Transactions",
+          "aiReview": "AI Review & Expert Analysis",
+          "governance": "Governance Voting",
+          "embassy": "Talent Embassy Funding",
+          "rewards": "Rewards"
+        },
+        "purposes": {
+          "registration": "Pay IDN to register/timestamp IP on-chain.",
+          "marketplace": "Exclusive currency for buying/selling proofs.",
+          "aiReview": "Premium validation and fast-track reviews.",
+          "governance": "Vote on DAO proposals and grants (from 2027).",
+          "embassy": "Community-driven support for local hubs.",
+          "rewards": "Earn IDN for validated innovations & contributions."
+        }
+      }
+    },
+    "conclusion": {
+      "title": "Conclusion",
+      "content": "IDN is not just a token — it's the economic layer for human innovation, connecting creators, investors, and institutions in a borderless market where talent becomes a universally tradable asset.",
+      "mission": "Mission: To make innovation a global right, not a privilege."
+    },
+    "multimindAwards": {
+      "title": "Gold Token — The Multimind Awards",
+      "overview": {
+        "title": "Overview",
+        "content1": "The Multimind Awards represent the highest honor within the MindVaultIP ecosystem — a decentralized recognition of human creativity, impact, and perseverance.",
+        "content2": "Unlike traditional awards confined to single disciplines or chosen by institutions, the Multimind Awards span all domains of excellence — from science, technology, and art to music, sports, literature, social innovation, and human resilience."
+      },
+      "philosophy": {
+        "title": "Philosophy and Vision",
+        "quote": "Every mind that creates, endures, or inspires — deserves to be seen.",
+        "content": "The Multimind Awards redefine how the world measures achievement. In this system, there is no single standard of greatness. Every act of creativity, discovery, artistry, or courage can hold equal value — whether it comes from a physicist, a poet, a musician, or an athlete."
+      },
+      "structure": {
+        "title": "Award Structure",
+        "award": {
+          "title": "🥇 Multimind Award (CA-GOLD)",
+          "reward": "Soulbound NFT + 1IDN",
+          "description": "Granted to individuals whose creations or actions generate measurable human impact — in any field, chosen by global community vote."
+        },
+        "allocation": {
+          "title": "Annual Allocation",
+          "content": "10% of the annual Talent Reward Pool is reserved for Multimind Awards. This ensures rarity, integrity, and symbolic prestige."
+        }
+      }
+    },
+    "innovationEconomy": {
+      "title": "Innovation Economy — Token Rewards & Validation",
+      "earning": {
+        "title": "Earning IDN Tokens",
+        "table": {
+          "headers": {
+            "category": "Category",
+            "description": "Description",
+            "reward": "Reward (IDN)"
+          },
+          "data": {
+            "invention": "Invention Registration",
+            "discovery": "Discovery Registration",
+            "idea": "Innovative Idea",
+            "validation": "Expert Validation",
+            "general": "General Registrations"
+          },
+          "descriptions": {
+            "invention": "Verified technological or scientific invention",
+            "discovery": "Verified scientific or natural discovery",
+            "idea": "Approved conceptual or creative innovation",
+            "validation": "Reviewing 20 validated inventions/discoveries",
+            "general": "Brand, logo, document, or artwork"
+          },
+          "rewards": {
+            "invention": "10 IDN",
+            "discovery": "10 IDN",
+            "idea": "5 IDN",
+            "validation": "5 IDN",
+            "general": "No token reward (record only)"
+          }
+        }
+      },
+      "validation": {
+        "title": "Validation System",
+        "stage1": {
+          "title": "Stage 1 — AI Origin Check",
+          "content": "The AI engine performs global cross-referencing to ensure the submission has not been previously registered on any blockchain or international IP system."
+        },
+        "stage2": {
+          "title": "Stage 2 — AI Council Assessment",
+          "intro": "The submission is evaluated by an AI Council composed of four distinct intelligence modules:",
+          "modules": {
+            "skeptic": "🧠 The Skeptic — questions novelty and practical proof",
+            "realist": "⚖️ The Realist — evaluates feasibility and logic",
+            "visionary": "🚀 The Visionary — measures creative potential",
+            "dreamer": "💡 The Dreamer — identifies imaginative aspects"
+          }
+        },
+        "stage3": {
+          "title": "Stage 3 — Human Expert Review",
+          "content": "Approved entries are reviewed by verified specialists in their respective domains. Each expert panel validates or rejects based on originality, potential, and authenticity."
+        }
+      }
+    },
+    "talentEmbassy": {
+      "title": "Phase 3 (2030–2035) — The Talent Embassy Mini City",
+      "overview": {
+        "title": "A Living Mini City for the Minds of the World",
+        "content1": "The Talent Embassy Mini City is the physical extension of MindVaultIP — a real-world ecosystem built entirely for human creativity, innovation, and talent.",
+        "content2": "Unlike traditional talent shows or innovation programs limited to stages or studios, the Talent Embassy is a living mini city — a purpose-built environment with no permanent residents, only creators, thinkers, and innovators from every corner of the world."
+      },
+      "concept": {
+        "title": "Core Concept",
+        "quote": "A mini city with no citizens — only creators.",
+        "content": "The Talent Embassy Mini City is where the digital proof of innovation meets physical creation. It operates on the same principles as MindVaultIP: transparency, equality, and community-driven validation."
+      },
+      "purpose": {
+        "title": "Purpose and Design",
+        "items": {
+          "hub": "A global hub of arts, science, sports, technology, and humanitarian innovation",
+          "districts": "Divided into districts — Innovation Zone, Art Quarter, Science Hub, Performance Arena, and AI Research Dome",
+          "economy": "Every structure, performance, and creation in the mini city is part of a living proof economy",
+          "transparency": "All transactions, recognitions, and votes are recorded transparently on-chain via IDN"
+        }
+      },
+      "vision": {
+        "title": "Long-Term Vision",
+        "content1": "The Talent Embassy Mini City will act as a model mini city for future generations — a prototype of how nations could evolve toward creativity-based economies.",
+        "content2": "It will become a permanent international destination for discovery, learning, and collaboration — a place where humanity can see its own potential alive and thriving."
+      },
+      "finalQuote": "Wherever you're from, whatever you create — the world will see you."
+    },
+    "communityEcosystem": {
+      "title": "Community & Ecosystem Growth",
+      "intro": "MindVaultIP thrives through collaboration between creators, validators, and the global community.",
+      "roles": {
+        "title": "Ecosystem Roles:",
+        "creators": {
+          "title": "Creators:",
+          "description": "Submit inventions, ideas, or discoveries for validation and earn IDN rewards."
+        },
+        "validators": {
+          "title": "Validators (Experts):",
+          "description": "Review submissions and ensure originality; rewarded in IDN."
+        },
+        "community": {
+          "title": "Community Members:",
+          "description": "Vote, nominate innovations, and help shape the DAO."
+        },
+        "partners": {
+          "title": "Partners & Organizations:",
+          "description": "Support education, research, and local innovation hubs."
+        }
+      },
+      "quote": "Growth is driven by community ownership — where every contribution adds value, and every participant shares in the outcome."
+    },
+    "technicalArchitecture": {
+      "title": "Technical Architecture",
+      "intro": "MindVaultIP is built on a hybrid decentralized architecture that combines blockchain immutability, AI-driven validation, and cloud scalability.",
+      "components": {
+        "title": "Core Components:",
+        "frontend": {
+          "title": "Frontend (Vite + React):",
+          "description": "User interface for proof registration, marketplace, and governance dashboard."
+        },
+        "smartContracts": {
+          "title": "Smart Contracts (Base Network):",
+          "description": "Handle registration, validation records, token issuance, and on-chain proofs."
+        },
+        "supabase": {
+          "title": "Supabase (Database & Authentication):",
+          "description": "Manages user sessions, metadata storage, and encrypted off-chain data."
+        },
+        "aiValidation": {
+          "title": "AI Validation Layer:",
+          "description": "A multi-agent system performing originality checks, semantic similarity mapping, and novelty scoring."
+        },
+        "marketplace": {
+          "title": "Marketplace Engine:",
+          "description": "Enables peer-to-peer trading and licensing of validated proofs using IDN tokens."
+        }
+      },
+      "quote": "This architecture ensures security, scalability, and transparency — merging the precision of blockchain with the intelligence of AI."
+    },
+    "legalCompliance": {
+      "title": "Legal & Compliance Note",
+      "content1": "MindVaultIP operates as a decentralized creative and intellectual platform — not a financial institution or investment service.",
+      "content2": "All tokens within the ecosystem, including Ideon Cerebrum (IDN) and Multimind Awards, represent proof-of-creation and contribution value, not financial securities.",
+      "content3": "The platform complies with international intellectual property standards and blockchain transparency principles to ensure lawful participation worldwide."
+    }
+  }
+}
+
