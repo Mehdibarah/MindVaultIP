@@ -321,14 +321,46 @@ export default function PublicProof() {
                                         </a>
                                     </div>
                                 )}
+                                {/* Storage URL (Supabase) - always use absolute URL to avoid Vercel routing */}
+                                {proof.ipfs_hash && proof.ipfs_hash.startsWith('http') && (
+                                    <div className="flex justify-between items-center gap-2">
+                                        <span className="text-gray-400">File URL</span>
+                                        <a 
+                                            href={proof.ipfs_hash} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="text-blue-400 hover:underline flex items-center gap-1"
+                                            onClick={(e) => {
+                                                // Ensure we always open absolute URL, not relative path
+                                                if (!proof.ipfs_hash.startsWith('http')) {
+                                                    e.preventDefault();
+                                                    console.error('[PublicProof] Invalid storage URL:', proof.ipfs_hash);
+                                                }
+                                            }}
+                                        >
+                                            View File
+                                            <ExternalLink className="w-3 h-3" />
+                                        </a>
+                                    </div>
+                                )}
                             </div>
 
                             <Separator className="bg-gray-700" />
 
                             <div className="grid grid-cols-2 gap-2">
                                 <Button variant="outline"><Share2 className="w-4 h-4 mr-2" />{t.share}</Button>
-                                {isOwner && (
-                                    <Button variant="outline"><Download className="w-4 h-4 mr-2"/>{t.download}</Button>
+                                {/* View/Download file button - only show if storage URL exists and is absolute */}
+                                {proof.ipfs_hash && proof.ipfs_hash.startsWith('http') && (
+                                    <Button 
+                                        variant="outline"
+                                        onClick={() => {
+                                            // Always open absolute URL in new tab
+                                            window.open(proof.ipfs_hash, '_blank', 'noopener,noreferrer');
+                                        }}
+                                    >
+                                        <Download className="w-4 h-4 mr-2"/>
+                                        {t.download || 'View File'}
+                                    </Button>
                                 )}
                             </div>
                              <div className="pt-2">
