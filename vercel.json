@@ -1,6 +1,17 @@
 {
   "rewrites": [
-    { "source": "/storage/(.*)", "destination": "https://ycivhrsvatslktkxqtrh.supabase.co/storage/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+    {
+      "source": "/storage/:path*",
+      "destination": "https://ycivhrsvatslktkxqtrh.supabase.co/storage/:path*"
+    },
+    {
+      "source": "/storage/v1/:path*",
+      "destination": "https://ycivhrsvatslktkxqtrh.supabase.co/storage/v1/:path*"
+    },
+    {
+      "source": "/storage/v1/object/public/:bucket/:rest*",
+      "destination": "https://ycivhrsvatslktkxqtrh.supabase.co/storage/v1/object/public/:bucket/:rest*"
+    }
+  ],
+  "cleanUrls": true
 }
