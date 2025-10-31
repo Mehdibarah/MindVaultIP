@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { ThumbsUp, ThumbsDown, Loader2 } from 'lucide-react';
-import { Vote } from '@/api/entities/Vote';
-import { Proof } from '@/api/entities';
-import { User } from '@/api/entities';
+import { Vote } from '@/services/entities/Vote';
+import { Proof } from '@/services/entities';
+import { User } from '@/services/entities';
 import { useWallet } from '../wallet/WalletContext';
 
 export default function VotingButtons({ proof, onVoteUpdate }) {

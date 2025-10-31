@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { base44 } from '@/api/base44Client';
+// Comments disabled - Base44 removed, Supabase comments table not yet implemented
 import CommentItem from './CommentItem';
 import { MessageSquare, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 const translations = {
   en: {
     comments: 'Comments',
-    commentingDisabled: 'Commenting is temporarily disabled.',
+    commentingDisabled: 'Commenting is not available.',
   },
   fa: {
     comments: 'نظرات',
@@ -32,27 +32,12 @@ export default function CommentSection({ proofId }) {
   const fetchComments = useCallback(async () => {
     setIsLoading(true);
     try {
-      const fetchedComments = await base44.entities.Comment.filter({ proof_id: proofId }, '-created_date');
-      
-      // The user lookup might fail if wallet_address is the only key, but we still display comments.
-      const userWallets = [...new Set(fetchedComments.map(c => c.user_wallet).filter(Boolean))];
-      let userMap = {};
-      if (userWallets.length > 0) {
-        const users = await base44.entities.User.filter({ wallet_address: { $in: userWallets } });
-        userMap = users.reduce((acc, user) => {
-          acc[user.wallet_address] = user;
-          return acc;
-        }, {});
-      }
-      
-      const populatedComments = fetchedComments.map(comment => ({
-        ...comment,
-        user: userMap[comment.user_wallet] || { full_name: 'Anonymous', profile_image: '' }
-      }));
-
-      setComments(populatedComments);
+      // Comments feature disabled - Base44 removed, Supabase comments table not yet implemented
+      // TODO: Implement comments using Supabase comments table
+      setComments([]);
     } catch (error) {
       console.error('Failed to fetch comments:', error);
+      setComments([]);
     } finally {
       setIsLoading(false);
     }

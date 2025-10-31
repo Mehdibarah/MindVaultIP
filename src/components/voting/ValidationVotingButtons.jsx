@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { ThumbsUp, ThumbsDown, Loader2, CheckCircle, XCircle } from 'lucide-react';
-import { Vote } from '@/api/entities/Vote';
-import { Proof } from '@/api/entities';
-import { User } from '@/api/entities';
-import { InvokeLLM } from '@/api/integrations';
+import { Vote } from '@/services/entities/Vote';
+import { Proof } from '@/services/entities';
+import { User } from '@/services/entities';
+import { InvokeLLM } from '@/services/integrations';
 import { useWallet } from '../wallet/WalletContext';
 import { motion } from 'framer-motion';
 

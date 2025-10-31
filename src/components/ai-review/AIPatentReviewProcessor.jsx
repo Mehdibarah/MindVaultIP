@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { Proof } from '@/api/entities';
-import { InvokeLLM } from '@/api/integrations';
+import { Proof } from '@/services/entities';
+import { InvokeLLM } from '@/services/integrations';
 
 const AI_REVIEW_THRESHOLD = 70; // Minimum score needed to pass
 

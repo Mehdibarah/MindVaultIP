@@ -5,14 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { base44 } from '@/api/base44Client';
+import { proofClient } from '@/services/index';
+import { calculateSHA256 } from '@/components/utils/cryptoUtils';
+import { uploadProofFile, getPublicUrl } from '@/lib/supabaseStorage';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import UploadProgress from '../components/create/UploadProgress';
-import { useWallet } from '@/components/wallet/WalletContext';
-// import RegistrationFeePayment from '@/components/contract/RegistrationFeePayment'; // Temporarily disabled due to old contract system
+import { useAccount } from 'wagmi';
+import { useWeb3Modal } from '@web3modal/wagmi/react';
+import PaymentStatus from '@/components/payments/PaymentStatus';
+import PaymentButton from '@/components/payments/PaymentButton';
+import { getPaymentConfig, logPaymentConfig } from '@/utils/paymentConfig';
 import { safeApiCall } from '@/utils/apiErrorHandler';
-import { safeBase44Call } from '@/utils/base44ErrorHandler';
 
 // Helper for SHA-256 Hashing
 async function getFileHash(file) {
@@ -45,8 +49,10 @@ export default function CreateProof() {
     const [dragActive, setDragActive] = useState(false);
     const fileInputRef = useRef(null);
     
-    // Use global wallet context
-    const { address, isConnected, connect, shortAddress } = useWallet();
+    // Use wagmi hooks directly
+    const { address, isConnected } = useAccount();
+    const { open: connect } = useWeb3Modal();
+    const shortAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "";
 
     // Wallet connection is now handled by the global WalletContext
     // No need for local wallet state management
@@ -149,7 +155,10 @@ export default function CreateProof() {
 
     // Payment handlers
     const handlePaymentSuccess = (hash) => {
-        setPaymentHash(hash);
+        console.log('[CreateProof] Payment successful, hash:', hash);
+        if (hash) {
+            setPaymentHash(hash);
+        }
         setStatus('uploading');
         setStep(1);
         // Proceed with registration after payment
@@ -163,38 +172,87 @@ export default function CreateProof() {
 
     const proceedWithRegistration = async () => {
         try {
-            // Step 2: Upload to IPFS
+            // Step 2: Register Proof in Supabase first to get proofId
             setStep(2);
-            const ipfsResult = await safeBase44Call(async () => {
-                const fileContent = await file.arrayBuffer();
-                return base44.proofs.uploadToIpfs({
-                    file_hash: fileHash,
-                    file_name: file.name,
-                    file_size: file.size,
-                    file_type: file.type,
-                    file_content: Array.from(new Uint8Array(fileContent)),
-                });
-            }, null);
-
-            if (!ipfsResult || !ipfsResult.ipfs_hash) {
-                throw new Error(t.ipfsUploadError || 'Failed to upload to IPFS.');
-            }
-
-            // Step 3: Register Proof
-            setStep(3);
             const proofData = {
                 title,
                 category,
                 description,
                 file_hash: fileHash,
-                ipfs_hash: ipfsResult.ipfs_hash,
+                file_name: file.name,
+                file_size: file.size,
+                file_type: file.type,
                 is_public: isPublic,
-                payment_hash: paymentHash, // Include payment hash
+                payment_hash: paymentHash,
+                created_by: address || undefined,
             };
-            const registrationResult = await safeBase44Call(() => base44.proofs.registerProof(proofData), null);
+            
+            console.log('[CreateProof] Registering proof with data:', proofData);
+            
+            // Create proof using Supabase client
+            const { proofClient } = await import('@/services/index');
+            const client = await proofClient();
+            const registrationResult = await client.create(proofData);
 
             if (!registrationResult || !registrationResult.id) {
                 throw new Error(t.proofRegistrationError || 'Failed to register proof.');
+            }
+
+            const proofId = registrationResult.id;
+            console.log('[CreateProof] Proof registered successfully:', proofId);
+
+            // Step 3: Upload file to Supabase storage after payment succeeds and proof is created
+            setStep(3);
+            let storageUrl = null;
+            
+            try {
+                console.log('[CreateProof] Uploading file to Supabase storage...');
+                
+                // Upload file with path based on proofId
+                // Path format: ${proofId}/${file.name} (bucket 'proofs' is already in .from())
+                // SDK automatically handles URL encoding for special characters in file names
+                const path = `${proofId}/${file.name}`;
+                const uploadResult = await uploadProofFile(path, file);
+                
+                if (uploadResult.error) {
+                    throw uploadResult.error;
+                }
+                
+                console.log('[CreateProof] ✅ File upload result:', uploadResult.data);
+                
+                // Get public URL from upload result (already encoded by SDK)
+                // Or get it separately if not included in upload result
+                if (uploadResult.publicUrl) {
+                    storageUrl = uploadResult.publicUrl;
+                } else {
+                    // Fallback: get URL separately (SDK handles encoding)
+                    const { data: urlData } = getPublicUrl(path);
+                    storageUrl = urlData?.publicUrl || null;
+                }
+                
+                console.log('[CreateProof] ✅ Public URL:', storageUrl);
+                
+                // Verify URL is accessible
+                if (storageUrl) {
+                    try {
+                        const testResponse = await fetch(storageUrl, { method: 'HEAD' });
+                        if (testResponse.ok) {
+                            console.log('[CreateProof] ✅ URL verified:', testResponse.status, testResponse.headers.get('content-type'));
+                        } else {
+                            console.warn('[CreateProof] ⚠️  URL returns status:', testResponse.status);
+                        }
+                    } catch (urlTestError) {
+                        console.warn('[CreateProof] ⚠️  Could not verify URL:', urlTestError);
+                    }
+                }
+                
+                // Update proof with storage URL if needed
+                if (storageUrl && registrationResult) {
+                    await client.update(proofId, { ipfs_hash: storageUrl });
+                }
+            } catch (uploadError) {
+                console.warn('[CreateProof] File upload failed, continuing without storage URL:', uploadError);
+                // Continue without file URL - we have file_hash
             }
 
             // Step 4: AI Review (initial stage)
@@ -202,7 +260,7 @@ export default function CreateProof() {
             setCreatedProof(registrationResult);
             setStatus('success');
         } catch (err) {
-            console.error("Registration error:", err);
+            console.error("[CreateProof] Registration error:", err);
             setError(err.message || t.registrationGenericError || 'An unexpected error occurred during registration.');
             setStatus('error');
         }
@@ -299,25 +357,37 @@ export default function CreateProof() {
                             </div>
                         </div>
 
-                        {/* Payment Component - Temporarily Disabled */}
-                        <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 text-center">
-                            <div className="flex items-center justify-center mb-4">
-                                <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                                    <Info className="w-6 h-6 text-yellow-500" />
-                                </div>
+                        {/* Payment Component */}
+                        <PaymentStatus
+                            enabled={getPaymentConfig().enabled}
+                            reason={getPaymentConfig().reason}
+                            onContinueWithoutPayment={() => {
+                                console.log('[CreateProof] Continuing without payment');
+                                handlePaymentSuccess(null); // No hash for skip payment
+                            }}
+                            onBack={() => setStatus('idle')}
+                        />
+                        
+                        {/* Payment Button - Only show when payments are enabled */}
+                        {getPaymentConfig().enabled && (
+                            <div className="text-center">
+                                <PaymentButton
+                                    onPaymentSuccess={(hash) => {
+                                        console.log('[CreateProof] Payment success, hash:', hash);
+                                        handlePaymentSuccess(hash);
+                                    }}
+                                    onPaymentError={(error) => {
+                                        console.error('[CreateProof] Payment error:', error);
+                                        handlePaymentError(error);
+                                    }}
+                                />
+                                {error && (
+                                    <div className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                                        <p className="text-red-400 text-sm">{error}</p>
+                                    </div>
+                                )}
                             </div>
-                            <h3 className="text-lg font-semibold text-white mb-2">Payment System Temporarily Disabled</h3>
-                            <p className="text-gray-300 mb-4">
-                                The registration fee payment system is currently being updated to work with the new contract system. 
-                                You can still create proofs, but payment functionality will be restored soon.
-                            </p>
-                            <Button
-                                onClick={handlePaymentSuccess}
-                                className="bg-[#00E5FF] hover:bg-[#00E5FF]/80 text-black font-semibold"
-                            >
-                                Continue Without Payment
-                            </Button>
-                        </div>
+                        )}
 
                         {/* Back Button */}
                         <div className="text-center">

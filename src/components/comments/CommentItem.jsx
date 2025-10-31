@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+// Comments disabled - Base44 removed
 // import { useAppWallet } from '../hooks/useAppWallet'; // Removed
 // import CommentForm from './CommentForm'; // Removed - comment functionality disabled
 import { User, CornerDownRight } from 'lucide-react';

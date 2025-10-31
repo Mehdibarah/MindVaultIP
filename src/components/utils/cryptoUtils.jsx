@@ -1,3 +1,7 @@
+import { parseEther } from "viem";
+
+// Registration fee from environment variable with fallback
+const REG_FEE = (import.meta?.env?.VITE_REG_FEE_ETH ?? "0.001").toString();
 
 // Client-side file hashing utility
 export async function calculateSHA256(file) {
@@ -120,16 +124,24 @@ export async function registerOnBlockchain(hash, ownerAddress) {
     
     const contract = new ethers.Contract(contractAddress, contractABI, signer);
     
-    // Check balance for gas
+    // Calculate registration fee in wei - ensure value is always 0.001 ETH (contract requirement)
+    const regFeeWei = parseEther(REG_FEE);
+    
+    // Check balance for gas + registration fee
     const balance = await provider.getBalance(ownerAddress);
-    if (balance < ethers.parseEther('0.001')) {
-      throw new Error('Insufficient ETH balance for gas fees. You need at least 0.001 ETH on Base network.');
+    const requiredBalance = ethers.parseEther(REG_FEE) + ethers.parseEther('0.0005'); // Fee + gas buffer
+    if (balance < requiredBalance) {
+      throw new Error(`Insufficient ETH balance. You need at least ${REG_FEE} ETH for registration fee plus gas on Base network.`);
     }
     
-    // Register the proof on blockchain (with gas estimation)
-    const gasEstimate = await contract.registerProof.estimateGas(hash, ownerAddress);
+    // Register the proof on blockchain
+    // Estimate gas with the value included (important for accurate estimation)
+    const gasEstimate = await contract.registerProof.estimateGas(hash, ownerAddress, { value: regFeeWei });
+    
+    // Call registerProof with value - let MetaMask estimate gas normally
     const tx = await contract.registerProof(hash, ownerAddress, {
-      gasLimit: gasEstimate * 120n / 100n, // Add 20% buffer
+      value: regFeeWei, // Always include 0.001 ETH registration fee (contract requirement)
+      // Let MetaMask estimate gas normally - no overrides
     });
     
     console.log('Transaction sent:', tx.hash);

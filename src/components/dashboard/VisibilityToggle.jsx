@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Proof } from '@/api/entities';
+import { Proof } from '@/services/entities';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Loader2 } from 'lucide-react';

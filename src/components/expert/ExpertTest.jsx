@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, CheckCircle, XCircle, Award, FileText, Lightbulb, Wrench, Loader2 } from 'lucide-react';
-import { generateExpertTestQuestion } from '@/api/functions';
+import { generateExpertTestQuestion } from '@/services/functions';
 
 const translations = {
   en: {

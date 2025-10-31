@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
@@ -235,7 +234,9 @@ export default function ExpertDashboard() {
   const checkExpertStatus = useCallback(async () => {
     setIsLoading(true);
     try {
-      const me = await base44.auth.me();
+      const { authClient } = await import('@/services');
+      const client = await authClient();
+      const me = await client.me();
       setIsExpert(me?.is_expert || false);
     } catch (error) {
       console.error("Failed to verify expert status", error);

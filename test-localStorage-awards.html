@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test localStorage Awards</title>
+</head>
+<body>
+    <h1>Test localStorage Awards</h1>
+    
+    <div style="margin: 20px 0;">
+        <button onclick="checkLocalStorage()">Check localStorage</button>
+        <button onclick="createTestAward()">Create Test Award</button>
+        <button onclick="testAPI()">Test API</button>
+        <button onclick="clearLocalStorage()">Clear localStorage</button>
+    </div>
+    
+    <div id="output"></div>
+
+    <script>
+        function checkLocalStorage() {
+            const awards = JSON.parse(localStorage.getItem('awards') || '[]');
+            document.getElementById('output').innerHTML = `
+                <h3>localStorage Awards</h3>
+                <p><strong>Count:</strong> ${awards.length}</p>
+                <pre>${JSON.stringify(awards, null, 2)}</pre>
+            `;
+            console.log('localStorage Awards:', awards);
+        }
+        
+        function createTestAward() {
+            const testAward = {
+                id: 'test_' + Date.now(),
+                title: 'Test Award for localStorage',
+                summary: 'This is a test award stored in localStorage',
+                category: 'Test',
+                creator: '0x981eDEe0A3721d049D7343C04363fb38402F4BeC',
+                recipient: '0x1234567890123456789012345678901234567890',
+                recipient_name: 'Test User',
+                image_url: 'data:image/jpeg;base64,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',
+                timestamp: new Date().toISOString(),
+                created_at: new Date().toISOString()
+            };
+            
+            const existingAwards = JSON.parse(localStorage.getItem('awards') || '[]');
+            existingAwards.push(testAward);
+            localStorage.setItem('awards', JSON.stringify(existingAwards));
+            
+            document.getElementById('output').innerHTML = `
+                <h3>Test Award Created</h3>
+                <p><strong>Total awards in localStorage:</strong> ${existingAwards.length}</p>
+                <pre>${JSON.stringify(testAward, null, 2)}</pre>
+            `;
+            
+            console.log('Test Award Created:', testAward);
+        }
+        
+        async function testAPI() {
+            try {
+                console.log('Testing /api/awards...');
+                const response = await fetch('/api/awards');
+                const data = await response.json();
+                
+                document.getElementById('output').innerHTML = `
+                    <h3>API Test</h3>
+                    <p><strong>Status:</strong> ${response.status}</p>
+                    <p><strong>Count:</strong> ${data.count}</p>
+                    <p><strong>OK:</strong> ${data.ok}</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+                
+                console.log('API Result:', data);
+            } catch (error) {
+                document.getElementById('output').innerHTML = `
+                    <h3>API Error</h3>
+                    <p style="color: red;">${error.message}</p>
+                `;
+                console.error('API Error:', error);
+            }
+        }
+        
+        function clearLocalStorage() {
+            localStorage.removeItem('awards');
+            document.getElementById('output').innerHTML = `
+                <h3>localStorage Cleared</h3>
+                <p>All awards removed from localStorage.</p>
+            `;
+            console.log('localStorage cleared');
+        }
+        
+        // Auto-run on load
+        window.onload = function() {
+            console.log('localStorage Test Page Loaded');
+            checkLocalStorage();
+        };
+    </script>
+</body>
+</html>

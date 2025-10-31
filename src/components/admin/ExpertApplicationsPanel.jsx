@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { ExpertApplication } from '@/api/entities';
-import { User } from '@/api/entities';
+import { ExpertApplication } from '@/services/entities';
+import { User } from '@/services/entities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Test Award</title>
+</head>
+<body>
+    <h1>Create Test Award</h1>
+    <button onclick="createTestAward()">Create Test Award</button>
+    <button onclick="checkAwards()">Check Awards</button>
+    <div id="output"></div>
+
+    <script>
+        function createTestAward() {
+            const testAward = {
+                id: 'test_' + Date.now(),
+                title: 'Test Award for All Users',
+                summary: 'This is a test award that should be visible to all users',
+                category: 'Test',
+                recipient: '0x1234567890123456789012345678901234567890',
+                recipient_name: 'Test User',
+                image_url: null,
+                timestamp: new Date().toISOString(),
+                created_at: new Date().toISOString()
+            };
+            
+            const existingAwards = JSON.parse(localStorage.getItem('awards') || '[]');
+            existingAwards.push(testAward);
+            localStorage.setItem('awards', JSON.stringify(existingAwards));
+            
+            document.getElementById('output').innerHTML = `
+                <p>✅ Test award created!</p>
+                <p>Total awards in localStorage: ${existingAwards.length}</p>
+                <pre>${JSON.stringify(existingAwards, null, 2)}</pre>
+            `;
+        }
+        
+        function checkAwards() {
+            const awards = JSON.parse(localStorage.getItem('awards') || '[]');
+            document.getElementById('output').innerHTML = `
+                <p>Current awards in localStorage: ${awards.length}</p>
+                <pre>${JSON.stringify(awards, null, 2)}</pre>
+            `;
+        }
+        
+        // Check on load
+        checkAwards();
+    </script>
+</body>
+</html>

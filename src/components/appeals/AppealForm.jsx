@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ProofAppeal } from '@/api/entities';
+import { ProofAppeal } from '@/services/entities';
 import { useWallet } from '../wallet/WalletContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';

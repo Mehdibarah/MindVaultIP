@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User } from '@/api/entities';
-import { useWallet } from '../wallet/WalletContext';
+import { User } from '@/services/entities';
+import { useAccount } from 'wagmi';
 import { 
   User as UserIcon, 
   Award, 
@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export default function UserProfile({ userId = null }) {
-  const { address } = useWallet();
+  const { address } = useAccount();
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isOwnProfile, setIsOwnProfile] = useState(false);

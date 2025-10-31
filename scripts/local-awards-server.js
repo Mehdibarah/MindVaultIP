@@ -9,7 +9,7 @@ const app = express();
 const PORT = process.env.LOCAL_AWARDS_PORT || 3001;
 
 // Import the handler
-import handler from '../api/awards/issue.js';
+import handler from '../services/awards/issue.js';
 
 app.use((req, res, next) => {
   // Disable any body parsing (let formidable handle multipart)

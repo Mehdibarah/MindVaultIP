@@ -9,7 +9,7 @@ export default function ToastDismisser() {
   useEffect(() => {
     // Dismiss all toasts on route change
     dismissAll();
-  }, [location.pathname, dismissAll]);
+  }, [location.pathname]);
 
   return null; // This component doesn't render anything
 }

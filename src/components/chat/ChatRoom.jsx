@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { ChatService, supabase, CHAT_ENABLED } from '@/lib/supabaseClient';
-import { getProfile } from '@/api/profile';
+import { getProfile } from '@/services/profile';
 import { useAccount } from 'wagmi';
 import FallbackNotice from '@/components/FallbackNotice';
 

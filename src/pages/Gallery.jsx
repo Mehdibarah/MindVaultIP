@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from "react";
-import { Proof } from "@/api/entities";
+import { Proof } from "@/services/entities";
 import { AnimatePresence, motion } from "framer-motion";
 import { Search, Filter, Users, AlertTriangle, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";

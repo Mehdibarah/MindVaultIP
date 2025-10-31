@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+// Stripe checkout disabled - Base44 removed, Supabase functions not yet implemented
 import { safeApiCall } from '@/utils/apiErrorHandler';
-import { safeBase44Call } from '@/utils/base44ErrorHandler';
+// safeBase44Call removed - Base44 disabled
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -74,24 +74,10 @@ export default function BuyCerebrumForm({ stripePublishableKey }) {
     setIsLoading(true);
 
     try {
-      const { data, error: funcError } = await safeBase44Call(() => base44.functions.invoke('createCheckoutSession', { quantity }), { data: null, error: null });
-      
-      if (funcError || !data || !data.sessionId) {
-        throw new Error(funcError?.details || t.error);
-      }
-
-      const stripe = await getStripe(stripePublishableKey);
-      if (!stripe) {
-        throw new Error("Stripe.js has not loaded yet.");
-      }
-      
-      const { error: stripeError } = await stripe.redirectToCheckout({
-        sessionId: data.sessionId,
-      });
-
-      if (stripeError) {
-        setError(stripeError.message);
-      }
+      // Stripe checkout feature disabled - Base44 removed
+      // TODO: Implement Stripe checkout using Supabase Edge Functions or direct Stripe API
+      console.warn('Stripe checkout not yet implemented with Supabase');
+      throw new Error('Checkout feature not yet available');
     } catch (err) {
       setError(err.message);
     } finally {

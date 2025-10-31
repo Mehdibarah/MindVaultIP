@@ -9,8 +9,15 @@ export default function HealthCheck() {
   useEffect(() => {
     const check = async () => {
       try {
-        const result = await checkHealth();
-        setHealth(result);
+        // Check health and get founder config from environment
+        const healthResult = await checkHealth().catch(() => ({ healthy: false, error: 'Health check failed' }));
+        const founderAddr = (import.meta.env.VITE_FOUNDER_ADDRESS || '').toLowerCase().trim();
+        
+        setHealth({
+          ...healthResult,
+          founderConfigured: !!founderAddr,
+          founderAddress: founderAddr
+        });
       } catch (error) {
         setHealth({ healthy: false, error: error.message });
       } finally {
@@ -48,7 +55,7 @@ export default function HealthCheck() {
 
   const { config } = health;
 
-  if (!config?.founderConfigured) {
+  if (!health?.founderConfigured) {
     return (
       <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 mb-6">
         <div className="flex items-center gap-3">

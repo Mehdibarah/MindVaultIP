@@ -9,7 +9,6 @@ import AIMentor from "./AIMentor";
 import Gallery from "./Gallery";
 import Marketplace from "./Marketplace";
 import AdminPanel from "./AdminPanel";
-import MindVaultIPWhitePaper from "./MindVaultIPWhitePaper";
 import TermsOfService from "./TermsOfService";
 import PrivacyPolicy from "./PrivacyPolicy";
 import WalletSecurity from "./WalletSecurity";
@@ -21,7 +20,6 @@ import Watchlist from "./Watchlist";
 import ExpertDashboard from "./ExpertDashboard";
 import ApplyExpert from "./ApplyExpert";
 import Profile from "./Profile";
-import Signup from "./Signup";
 
 
 import {
@@ -48,7 +46,6 @@ const PAGES = {
   Gallery: Gallery,
   Marketplace: Marketplace,
   AdminPanel: AdminPanel,
-  MindVaultIPWhitePaper: MindVaultIPWhitePaper,
   TermsOfService: TermsOfService,
   PrivacyPolicy: PrivacyPolicy,
   WalletSecurity: WalletSecurity,
@@ -60,7 +57,6 @@ const PAGES = {
   ExpertDashboard: ExpertDashboard,
   ApplyExpert: ApplyExpert,
   Profile: Profile,
-  Signup: Signup,
 };
 
 function _getCurrentPage(url) {
@@ -82,7 +78,6 @@ function _getCurrentPage(url) {
     "gallery": "Gallery",
     "marketplace": "Marketplace",
     "adminpanel": "AdminPanel",
-    "mindvaultipwhitepaper": "MindVaultIPWhitePaper",
     "termsofservice": "TermsOfService",
     "privacypolicy": "PrivacyPolicy",
     "walletsecurity": "WalletSecurity",
@@ -92,65 +87,42 @@ function _getCurrentPage(url) {
     "watchlist": "Watchlist",
     "expertdashboard": "ExpertDashboard",
     "applyexpert": "ApplyExpert",
-    "profile": "Profile",
-    "signup": "Signup"
+    "profile": "Profile"
   };
   
   const pageName = routeToPageMap[urlLastPart.toLowerCase()];
-  return pageName || "Landing";
+  return pageName;
 }
 
 function PagesContent() {
   const location = useLocation();
   const currentPage = _getCurrentPage(location.pathname);
-  
-  // Debug logging
-  console.log('🔍 Router Debug:', {
-    pathname: location.pathname,
-    currentPage: currentPage,
-    timestamp: new Date().toISOString()
-  });
 
   return (
-    <div>
-      <div className="p-4 bg-yellow-600 text-black">
-        🔍 Debug: Current Path: {location.pathname} | Current Page: {currentPage}
-      </div>
-      <div className="p-4 bg-red-600 text-white">
-        🚨 ROUTES TEST - If you see this, routing is working!
-      </div>
-      <Routes>
-        <Route path="/" element={<div className="p-8 text-white bg-blue-600">🏠 HOME PAGE - Landing Component</div>} />
+    <Layout currentPageName={currentPage}>
+      <Routes caseSensitive={false}>
+        <Route path="/multimindawards/new" element={<NewAward />} />
+        <Route path="/multimindawards" element={<MultimindAwards />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/test" element={<div className="p-8 text-white bg-green-600">✅ Test Route Working!</div>} />
-        <Route path="/simple" element={<div className="p-8 text-white bg-blue-600">🔵 Simple Route Working!</div>} />
         <Route path="/createproof" element={<CreateProof />} />
         <Route path="/landing" element={<Landing />} />
         <Route path="/aimentor" element={<AIMentor />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/adminpanel" element={<AdminPanel />} />
-        <Route
-          path="/mindvaultipwhitepaper"
-          element={<MindVaultIPWhitePaper />}
-        />
         <Route path="/termsofservice" element={<TermsOfService />} />
         <Route path="/privacypolicy" element={<PrivacyPolicy />} />
         <Route path="/walletsecurity" element={<WalletSecurity />} />
         <Route path="/messages" element={<Messages />} />
         <Route path="/chat" element={<Chat />} />
-        <Route path="/multimindawards" element={<MultimindAwards />} />
-        <Route path="/multimindawards/new" element={<NewAward />} />
         <Route path="/watchlist" element={<Watchlist />} />
         <Route path="/expertdashboard" element={<ExpertDashboard />} />
         <Route path="/applyexpert" element={<ApplyExpert />} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/signup" element={<Signup />} />
-
-        {/* برای مسیرهای ناشناخته - باید در انتها باشد */}
+        <Route path="/" element={<Landing />} />
         <Route path="*" element={<div className="p-8 text-white bg-red-600">❌ 404 - Route not found: {location.pathname}</div>} />
       </Routes>
-    </div>
+    </Layout>
   );
 }
 

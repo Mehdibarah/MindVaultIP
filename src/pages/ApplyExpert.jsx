@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ExpertApplication } from '@/api/entities';
-import { User } from '@/api/entities'; // Keeping User import as it was present in the original file and not explicitly removed by the outline.
+import { ExpertApplication } from '@/services/entities';
+import { User } from '@/services/entities'; // Keeping User import as it was present in the original file and not explicitly removed by the outline.
 import { useWallet } from '../components/wallet/WalletContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Keeping Card components as they were in original imports, even if not used in the new JSX structure.

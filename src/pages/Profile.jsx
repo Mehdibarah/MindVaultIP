@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 const translations = {
   en: {
     title: 'User Profile',
-    connectPrompt: 'Profile functionality is temporarily disabled.',
+    connectPrompt: 'Connect your wallet to access your profile.',
   },
   fa: {
     title: 'پروفایل کاربری',

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Awards Debug</title>
+</head>
+<body>
+    <h1>Awards Debug Test</h1>
+    <div id="output"></div>
+
+    <script>
+        function debugAwards() {
+            const output = document.getElementById('output');
+            
+            // Check localStorage
+            const storedAwards = JSON.parse(localStorage.getItem('awards') || '[]');
+            
+            output.innerHTML = `
+                <h2>LocalStorage Awards:</h2>
+                <p>Number of awards: ${storedAwards.length}</p>
+                <pre>${JSON.stringify(storedAwards, null, 2)}</pre>
+                
+                <h2>Environment Variables:</h2>
+                <p>VITE_FOUNDER_ADDRESS: ${import.meta.env?.VITE_FOUNDER_ADDRESS || 'Not available'}</p>
+                
+                <h2>Window Ethereum:</h2>
+                <p>Has ethereum: ${typeof window !== 'undefined' && window.ethereum ? 'Yes' : 'No'}</p>
+                
+                <h2>Test Award Creation:</h2>
+                <button onclick="createTestAward()">Create Test Award</button>
+            `;
+        }
+        
+        function createTestAward() {
+            const testAward = {
+                id: 'test_' + Date.now(),
+                title: 'Test Award',
+                summary: 'This is a test award',
+                category: 'Test',
+                recipient: '0x1234567890123456789012345678901234567890',
+                recipient_name: 'Test User',
+                image_url: null,
+                timestamp: new Date().toISOString(),
+                created_at: new Date().toISOString()
+            };
+            
+            const existingAwards = JSON.parse(localStorage.getItem('awards') || '[]');
+            existingAwards.push(testAward);
+            localStorage.setItem('awards', JSON.stringify(existingAwards));
+            
+            alert('Test award created!');
+            debugAwards();
+        }
+        
+        // Run debug on load
+        debugAwards();
+    </script>
+</body>
+</html>

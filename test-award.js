@@ -1,0 +1,1 @@
+localStorage.setItem("awards", JSON.stringify([{"id":"test_123","title":"Test Award","summary":"This is a test award","category":"Test","recipient":"0x1234567890123456789012345678901234567890","recipient_name":"Test User","image_url":null,"timestamp":"2024-01-01T00:00:00.000Z","created_at":"2024-01-01T00:00:00.000Z"}]));

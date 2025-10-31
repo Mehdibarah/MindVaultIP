@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { proofClient } from '@/services/index';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -111,7 +111,8 @@ export default function SetPriceButton({ proof, onUpdate, disabled }) {
         sale_price: isForSale ? parseFloat(salePrice) : null
       };
 
-      const updatedProof = await base44.entities.Proof.update(proof.id, updatedData);
+      const client = await proofClient();
+      const updatedProof = await client.update(proof.id, updatedData);
       onUpdate(updatedProof);
       setIsOpen(false);
       

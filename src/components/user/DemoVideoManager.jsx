@@ -1,10 +1,10 @@
 
 import React, { useState, useRef } from 'react';
-import { Proof } from '@/api/entities';
+import { Proof } from '@/services/entities';
 import { Button } from '@/components/ui/button';
-import { UploadFile } from '@/api/integrations';
+import { UploadFile } from '@/services/integrations';
 import { calculateSHA256 } from '../utils/cryptoUtils';
-import { validateVideoHash } from '@/api/functions';
+import { validateVideoHash } from '@/services/functions';
 import { Upload, Loader2, AlertCircle, Fingerprint, BadgeCheck, XCircle } from 'lucide-react';
 
 const translations = {

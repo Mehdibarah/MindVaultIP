@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { UserReport } from '@/api/entities';
-import { Proof } from '@/api/entities';
-import { ProofModeration } from '@/api/entities';
-import { User } from '@/api/entities';
+import { UserReport } from '@/services/entities';
+import { Proof } from '@/services/entities';
+import { ProofModeration } from '@/services/entities';
+import { User } from '@/services/entities';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

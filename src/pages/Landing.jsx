@@ -63,7 +63,7 @@ export default function LandingPage() {
                     {t.createProof}
                 </Button>
             </Link>
-            <Link to={createPageUrl('MindVaultIPWhitePaper')}>
+            <Link to={createPageUrl('WhitePaper')}>
                  <Button size="lg" variant="outline" className="font-bold px-10 py-7 text-lg border-gray-600 bg-gray-800 text-white hover:bg-gray-700 hover:text-white w-full sm:w-auto group">
                     {t.viewWhitepaper}
                 </Button>

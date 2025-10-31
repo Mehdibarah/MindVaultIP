@@ -12,16 +12,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import UnifiedWalletConnect from "@/components/wallet/UnifiedWalletConnect";
 import { safeApiCall } from "@/utils/apiErrorHandler";
-import { safeBase44Auth } from "@/utils/base44ErrorHandler";
+import { authClient } from '@/services/index';
 import { FEATURE_AI_MENTOR, FEATURE_MESSAGES, FEATURE_MARKETPLACE, FEATURE_EXPERT_DASHBOARD, FEATURE_ADMIN_PANEL } from "@/utils/featureFlags";
 import { getCurrentLocale, setLocale, getLanguageName, SUPPORTED_LOCALES } from "@/utils/i18nConfig";
 
 // Updated Lucide React imports
-import { Home, LayoutDashboard, User, Bot, ShoppingCart, MessageSquare, List, Compass, BookOpen, Shield, Banknote, UserCog, MoreHorizontal, Languages, Coins, PlusCircle, Menu, X } from "lucide-react";
+import { Home, LayoutDashboard, User, Bot, ShoppingCart, MessageSquare, List, Compass, BookOpen, Shield, Banknote, UserCog, MoreHorizontal, Languages, Coins, PlusCircle, Menu, X, Award } from "lucide-react";
 
 
 const translations = {
@@ -36,7 +35,6 @@ const translations = {
     profile: "Profile",
     more: "More",
     tokenFactory: "Token Factory",
-    whitePaper: "White Paper",
     walletSecurity: "Wallet Security",
     adminPanel: "Admin Panel",
     platform: "Platform",
@@ -60,7 +58,6 @@ const translations = {
     profile: 'پروفایل',
     more: 'بیشتر',
     tokenFactory: 'کارخانه توکن',
-    whitePaper: 'وایت پیپر',
     walletSecurity: 'امنیت کیف پول',
     adminPanel: 'پنل مدیریت',
     platform: 'پلتفرم',
@@ -84,7 +81,6 @@ const translations = {
     profile: "个人资料",
     more: "更多",
     tokenFactory: "代币工厂",
-    whitePaper: "白皮书",
     walletSecurity: "钱包安全",
     adminPanel: "管理面板",
     platform: "平台",
@@ -107,7 +103,6 @@ const translations = {
     profile: "प्रोफ़ाइल",
     more: "और",
     tokenFactory: "टोकन फ़ैक्टरी",
-    whitePaper: "श्वेतपत्र",
     walletSecurity: "वॉलेट सुरक्षा",
     adminPanel: "एडमिन पैनल",
     platform: "प्लेटफ़ॉर्म",
@@ -131,7 +126,6 @@ const translations = {
     profile: "Perfil",
     more: "Más",
     tokenFactory: "Fábrica de tokens",
-    whitePaper: "Libro blanco",
     walletSecurity: "Seguridad de la billetera",
     adminPanel: "Panel de administración",
     platform: "Plataforma",
@@ -154,7 +148,6 @@ const translations = {
     profile: "Profil",
     more: "Plus",
     tokenFactory: "Usine de jetons",
-    whitePaper: "Livre blanc",
     walletSecurity: "Sécurité du portefeuille",
     adminPanel: "Panneau d'administration",
     platform: "Plateforme",
@@ -177,7 +170,6 @@ const translations = {
     profile: "الملف الشخصي",
     more: "المزيد",
     tokenFactory: "مصنع الرموز",
-    whitePaper: "الورقة البيضاء",
     walletSecurity: "أمان المحفظة",
     adminPanel: "لوحة الإدارة",
     platform: "المنصة",
@@ -200,7 +192,6 @@ const translations = {
     profile: "Profil",
     more: "Mehr",
     tokenFactory: "Token-Fabrik",
-    whitePaper: "Whitepaper",
     walletSecurity: "Wallet-Sicherheit",
     adminPanel: "Admin-Panel",
     platform: "Plattform",
@@ -223,7 +214,6 @@ const translations = {
     profile: "پروفائل",
     more: "مزید",
     tokenFactory: "ٹوکن فیکٹری",
-    whitePaper: "وائٹ پیپر",
     walletSecurity: "والیٹ سیکیورٹی",
     adminPanel: "ایڈمن پینل",
     platform: "پلیٹ فارم",
@@ -246,7 +236,6 @@ const translations = {
     profile: "Профиль",
     more: "Еще",
     tokenFactory: "Фабрика токенов",
-    whitePaper: "Белая книга",
     walletSecurity: "Безопасность кошелька",
     adminPanel: "Панель администратора",
     platform: "Платформа",
@@ -269,7 +258,6 @@ const translations = {
     profile: "プロフィール",
     more: "その他",
     tokenFactory: "トークンファクトリー",
-    whitePaper: "ホワイトペーパー",
     walletSecurity: "ウォレットセキュリティ",
     adminPanel: "管理パネル",
     platform: "プラットフォーム",
@@ -292,7 +280,6 @@ const translations = {
     profile: "프로필",
     more: "더보기",
     tokenFactory: "토큰 팩토리",
-    whitePaper: "백서",
     walletSecurity: "지갑 보안",
     adminPanel: "관리자 패널",
     platform: "플랫폼",
@@ -315,7 +302,6 @@ const translations = {
     profile: "Profaili",
     more: "Zaidi",
     tokenFactory: "Kiwanda cha Tokeni",
-    whitePaper: "Karatasi Nyeupe",
     walletSecurity: "Usalama wa Wallet",
     platform: "Jukwaa",
     createProof: "Unda Ushahidi",
@@ -337,7 +323,6 @@ const translations = {
     profile: "Furofayil",
     more: "Ƙari",
     tokenFactory: "Ma'aikatar Token",
-    whitePaper: "Farar Takarda",
     walletSecurity: "Tsaron Wallet",
     adminPanel: "Kwamitin Gudanarwa",
     platform: "Platform",
@@ -360,7 +345,6 @@ const translations = {
     profile: "Profaili",
     more: "Diẹ sii",
     tokenFactory: "Ilé iṣẹ́ Token",
-    whitePaper: "Iwe funfun",
     walletSecurity: "Ìbàjẹ́ àpò-ìfọwọ́ra",
     adminPanel: "Panaali Aláṣẹ",
     platform: "Páríbá",
@@ -383,7 +367,6 @@ const translations = {
     profile: "Profil",
     more: "Daha Fazla",
     tokenFactory: "Token Fabrikası",
-    whitePaper: "Teknik Rapor",
     walletSecurity: "Cüzdan Güvenliği",
     adminPanel: "Yönetici Paneli",
     platform: "Platform",
@@ -406,7 +389,6 @@ const translations = {
     profile: 'پروفائل',
     more: 'مزید',
     tokenFactory: 'ٹوکن فیکٹری',
-    whitePaper: 'وائٹ پیپر',
     walletSecurity: 'والٹ سیکیورٹی',
     adminPanel: 'ایڈمن پینل',
     platform: 'پلیٹ فارم',
@@ -487,7 +469,8 @@ function AppLayout({ children, currentPageName }) {
         }
         
         // Use safe API call to prevent errors from breaking the app
-        const user = await safeBase44Auth(() => base44.auth.me(), null);
+        const client = await authClient();
+        const user = await client.me();
         if (user && user.role) {
           setUserRole(user.role);
         } else {
@@ -530,7 +513,7 @@ function AppLayout({ children, currentPageName }) {
         { name: ['fa', 'ar', 'ur', 'bal'].includes(language) ? 'خانه' : 'Home', icon: Home, page: 'Landing' },
         { name: t.dashboard, icon: LayoutDashboard, page: 'Dashboard' },
         { name: t.createProof, icon: PlusCircle, page: 'CreateProof' },
-        { name: t.gallery, icon: Compass, page: 'Gallery' },
+        { name: 'Multimind Awards', icon: Award, page: 'MultimindAwards' },
         { name: t.watchlist, icon: List, page: 'Watchlist' },
         { name: t.profile, icon: User, page: 'Profile' },
         ...(FEATURE_EXPERT_DASHBOARD ? [{ name: t.expertDashboard, icon: UserCog, page: 'ExpertDashboard' }] : []),
@@ -540,7 +523,6 @@ function AppLayout({ children, currentPageName }) {
         ...(FEATURE_MESSAGES ? [{ name: t.messages, icon: MessageSquare, page: 'Messages' }] : []),
         ...(FEATURE_AI_MENTOR ? [{ name: t.aiMentor, icon: Bot, page: 'AIMentor' }] : []),
         ...(FEATURE_MARKETPLACE ? [{ name: t.marketplace, icon: ShoppingCart, page: 'Marketplace' }] : []),
-        { name: t.whitePaper, icon: BookOpen, page: 'MindVaultIPWhitePaper' },
         { name: t.walletSecurity, icon: Shield, page: 'WalletSecurity' },
       ];
 

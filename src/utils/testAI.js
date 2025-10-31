@@ -3,7 +3,7 @@
  */
 
 import { detectIntent, shouldSearch, detectLanguage } from './intent';
-import { handleAIRequest } from '../api/aiHandler';
+import { handleAIRequest } from '../services/aiHandler';
 
 // Test intent detection
 console.log('Testing Intent Detection:');

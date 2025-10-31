@@ -4,7 +4,8 @@ import { QueryClient } from '@tanstack/react-query'
 import { createWeb3Modal } from '@web3modal/wagmi/react'
 import { base, mainnet } from 'wagmi/chains'
 
-// Optimized wagmi config for faster connections
+// Note: Ledger HID connector removed to avoid HID permission errors on page load
+// Ledger Live is still available through WalletConnect in Web3Modal (no HID required)
 export const wagmiConfig = createConfig({
   chains: [base, mainnet],
   connectors: [
@@ -22,10 +23,12 @@ export const wagmiConfig = createConfig({
       qrModalOptions: {
         themeMode: 'dark',
         themeVariables: {
-          '--w3m-z-index': '1000'
+          '--wcm-z-index': '1000'
         }
       }
     }),
+    // Ledger support: Ledger Live is available through WalletConnect
+    // HID connector removed to avoid permission errors on page load
   ],
   transports: {
     [base.id]: http(undefined, {
@@ -64,7 +67,15 @@ export const queryClient = new QueryClient({
 })
 
 // Optimized Web3Modal setup for faster connections
+let web3ModalInitialized = false;
+
 export function setupWeb3Modal() {
+  // Prevent double initialization
+  if (web3ModalInitialized) {
+    console.warn('[Wagmi] Web3Modal already initialized, skipping...');
+    return;
+  }
+
   createWeb3Modal({
     wagmiConfig,
     projectId: import.meta.env.VITE_WC_PROJECT_ID || '1279cd8b19e9ce4ba19e81e410bc4552',
@@ -73,17 +84,21 @@ export function setupWeb3Modal() {
     enableOnramp: false, // Disable onramp for faster loading
     themeMode: 'dark',
     themeVariables: {
-      '--w3m-z-index': '1000',
-      '--w3m-accent': '#3b82f6',
-      '--w3m-border-radius-master': '8px',
+      '--wcm-z-index': '1000',
+      '--wcm-accent-color': '#3b82f6',
+      '--wcm-border-radius-master': '8px',
     },
     // Optimize modal behavior
     defaultChain: base,
     featuredWalletIds: [
       'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
       '4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0', // Coinbase Wallet
+      '19177a98252e07ddfc9af2083ba8e07ef627cb6103467ffebb3f8f4205fd7927', // Ledger Live
     ],
   })
+
+  web3ModalInitialized = true;
+  console.log('[Wagmi] ✅ Web3Modal initialized');
 }
 
 // Export base chain for easy access

@@ -1,10 +1,10 @@
 
 import React, { useEffect } from 'react';
-import { Proof } from '@/api/entities';
-import { User } from '@/api/entities';
-import { PlatformTreasury } from '@/api/entities';
-import { RewardTransaction } from '@/api/entities';
-import { InvokeLLM } from '@/api/integrations';
+import { Proof } from '@/services/entities';
+import { User } from '@/services/entities';
+import { PlatformTreasury } from '@/services/entities';
+import { RewardTransaction } from '@/services/entities';
+import { InvokeLLM } from '@/services/integrations';
 
 // The base JSON schema for the AI response
 const responseSchema = {

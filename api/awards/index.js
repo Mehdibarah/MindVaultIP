@@ -41,20 +41,14 @@ export default async function handler(req, res) {
 }
 
 async function handleGetAwards(req, res) {
-
   try {
-    // Validate environment
-    try {
-      assertEnv();
-    } catch (envError) {
-      console.error("awards.get.env.error", { message: envError.message });
-      return res.status(500).json({ error: "Server configuration error" });
-    }
-
-    // Create Supabase client
+    assertEnv();
     const supabase = createClient(ENV.SUPABASE_URL, ENV.SUPABASE_SERVICE_KEY);
 
-    // Fetch awards from database
+    console.log("awards.get.request", { 
+      message: "Fetching ALL awards for public access"
+    });
+
     const { data: awards, error } = await supabase
       .from('awards')
       .select('*')
@@ -62,7 +56,7 @@ async function handleGetAwards(req, res) {
 
     if (error) {
       console.error("awards.get.db.error", { message: error.message });
-      return res.status(500).json({ error: "Failed to fetch awards" });
+      return res.status(500).json({ error: 'Failed to fetch awards' });
     }
 
     console.log("awards.get.success", { 
@@ -70,23 +64,18 @@ async function handleGetAwards(req, res) {
       timestamp: new Date().toISOString()
     });
 
-    // Return awards list
     return res.status(200).json({
       ok: true,
-      success: true,
       awards: awards || [],
       count: awards?.length || 0,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-
-  } catch (err) {
+  } catch (e) {
     console.error("awards.get.error", { 
-      message: err?.message, 
-      stack: err?.stack?.slice(0, 300) 
+      message: e?.message, 
+      stack: e?.stack?.slice(0, 300) 
     });
-    return res.status(500).json({ 
-      error: err?.message || "Internal server error" 
-    });
+    return res.status(500).json({ error: e?.message || 'Internal server error' });
   }
 }
 

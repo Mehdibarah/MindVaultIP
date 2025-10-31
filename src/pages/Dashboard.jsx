@@ -18,13 +18,13 @@ const translations = {
     title: 'My Proofs',
     newProof: 'New Proof',
     noProofsYet: 'No proofs yet',
-    noProofsDesc: 'Functionality to create and view proofs is temporarily disabled.',
+    noProofsDesc: 'Create and view your intellectual property proofs.',
     createFirstProof: 'Create a Proof',
     viewOnIPFS: 'View on IPFS',
     ipfs: 'IPFS',
     viewDetails: 'View Details',
     details: 'Details',
-    connectWalletPrompt: 'Functionality to view proofs is temporarily disabled.',
+    connectWalletPrompt: 'Connect your wallet to view your proofs.',
     connectWallet: 'Connect Wallet'
   },
   fa: {

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API Awards</title>
+</head>
+<body>
+    <h1>Test API Awards</h1>
+    <button onclick="testAllAwards()">Test All Awards</button>
+    <button onclick="testUserAwards()">Test User Awards</button>
+    <button onclick="createTestAward()">Create Test Award</button>
+    <div id="output"></div>
+
+    <script>
+        async function testAllAwards() {
+            try {
+                const response = await fetch('/api/awards');
+                const data = await response.json();
+                
+                document.getElementById('output').innerHTML = `
+                    <h3>All Awards (API)</h3>
+                    <p>Status: ${response.status}</p>
+                    <p>Count: ${data.count}</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('output').innerHTML = `
+                    <h3>Error</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+        
+        async function testUserAwards() {
+            try {
+                const testAddress = '0x1234567890123456789012345678901234567890';
+                const response = await fetch(`/api/awards?address=${testAddress}`);
+                const data = await response.json();
+                
+                document.getElementById('output').innerHTML = `
+                    <h3>User Awards (API)</h3>
+                    <p>Address: ${testAddress}</p>
+                    <p>Status: ${response.status}</p>
+                    <p>Count: ${data.count}</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('output').innerHTML = `
+                    <h3>Error</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+        
+        function createTestAward() {
+            const testAward = {
+                id: 'test_' + Date.now(),
+                title: 'Test Award for API',
+                summary: 'This is a test award for API testing',
+                category: 'Test',
+                creator: '0x1234567890123456789012345678901234567890',
+                recipient: '0x1234567890123456789012345678901234567890',
+                recipient_name: 'Test User',
+                image_url: null,
+                timestamp: new Date().toISOString(),
+                created_at: new Date().toISOString()
+            };
+            
+            const existingAwards = JSON.parse(localStorage.getItem('awards') || '[]');
+            existingAwards.push(testAward);
+            localStorage.setItem('awards', JSON.stringify(existingAwards));
+            
+            document.getElementById('output').innerHTML = `
+                <h3>Test Award Created</h3>
+                <p>Total awards in localStorage: ${existingAwards.length}</p>
+                <pre>${JSON.stringify(testAward, null, 2)}</pre>
+            `;
+        }
+    </script>
+</body>
+</html>

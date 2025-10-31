@@ -20,9 +20,7 @@ import StartChatButton from '../components/chat/StartChatButton';
 import DemoVideoManager from '../components/user/DemoVideoManager';
 import ReportProofButton from '../components/moderation/ReportProofButton';
 const CommentSection = React.lazy(() => import('../components/comments/CommentSection'));
-import { base44 } from '@/api/base44Client';
-import { safeApiCall } from '@/utils/apiErrorHandler';
-import { safeBase44Call } from '@/utils/base44ErrorHandler';
+import { proofClient } from '@/services/index';
 
 
 const translations = {
@@ -109,7 +107,8 @@ export default function PublicProof() {
         const loadData = async () => {
             setIsLoading(true);
             try {
-                const proofData = await safeBase44Call(() => base44.entities.Proof.get(proofId), null);
+                const client = await proofClient();
+                const proofData = await client.get(proofId);
                 
                 if (!proofData) {
                     setError(t.proofNotFound);
@@ -130,10 +129,10 @@ export default function PublicProof() {
                 setProof(proofData);
                 
                 // Fetch owner data based on created_by email if wallet address is not available/reliable
+                // Note: User filtering is Base44-specific, will need separate client if needed
                 if (proofData.created_by) {
-                    const users = await safeBase44Call(() => base44.entities.User.filter({ email: proofData.created_by }), []);
-                    const ownerData = users[0];
-                    setOwner(ownerData || { full_name: t.unknownUser });
+                    // For now, use created_by as owner name
+                    setOwner({ full_name: proofData.created_by });
                 }
 
 

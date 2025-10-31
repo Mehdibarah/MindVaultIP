@@ -1,4 +1,4 @@
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useSendTransaction } from 'wagmi'
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useSendTransaction, useChainId } from 'wagmi'
 import { useAccount, useBalance } from 'wagmi'
 import { parseEther, formatEther } from 'viem'
 import { contractConfig, paymentContractConfig, getContractAddress, REGISTRATION_FEE } from '@/lib/contracts'
@@ -94,6 +94,7 @@ export function usePaymentContract() {
 // Hook for ETH payments (registration fees)
 export function useETHPayment() {
   const { address } = useAccount()
+  const chainId = useChainId()
   const { data: ethBalance } = useBalance({ address })
   const { sendTransaction, data: hash, error, isPending } = useSendTransaction()
   
@@ -104,12 +105,28 @@ export function useETHPayment() {
   // Send ETH payment for registration
   const payRegistrationFee = async () => {
     try {
+      // Ensure value is always 0.001 ETH (1000000000000000 wei)
+      const value = parseEther(REGISTRATION_FEE.AMOUNT)
+      const paymentAddress = getContractAddress('PAYMENT')
+      
+      // Send as simple ETH transfer
+      // Set explicit gas limit for simple ETH transfer to prevent MetaMask overestimation
+      // Simple ETH transfers use ~21,000 gas - we set 25,000 for safety margin
       await sendTransaction({
-        to: getContractAddress('PAYMENT'),
-        value: BigInt(REGISTRATION_FEE.AMOUNT_WEI),
+        to: paymentAddress as `0x${string}`,
+        value: value, // 0.001 ETH registration fee
+        gas: 25000n, // Explicit gas limit for simple ETH transfer (~21k + buffer)
+        // No data field = simple ETH transfer (not a contract call)
+      })
+      
+      console.log('[useETHPayment] Payment transaction sent:', {
+        to: paymentAddress,
+        value: value.toString(),
+        amount: REGISTRATION_FEE.AMOUNT + ' ETH',
+        gas: '25000'
       })
     } catch (err) {
-      console.error('ETH payment error:', err)
+      console.error('[useETHPayment] Payment error:', err)
       throw err
     }
   }

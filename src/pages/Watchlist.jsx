@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
@@ -161,9 +160,12 @@ export default function WatchlistPage() {
   const fetchWatchlist = useCallback(async () => {
     setIsLoading(true);
     try {
-      const me = await base44.auth.me();
+      const { authClient, proofClient } = await import('@/services');
+      const auth = await authClient();
+      const proof = await proofClient();
+      const me = await auth.me();
       if (me && me.watchlist && me.watchlist.length > 0) {
-        const proofs = await base44.entities.Proof.filter({ id: { $in: me.watchlist } });
+        const proofs = await proof.filter({ id: { $in: me.watchlist } });
         setWatchedProofs(proofs || []);
       } else {
         setWatchedProofs([]);

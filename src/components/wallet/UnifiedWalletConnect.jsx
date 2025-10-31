@@ -4,8 +4,8 @@ import { useAccount, useBalance, useSwitchChain, useDisconnect } from 'wagmi'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
 import { base } from '@/lib/wagmi'
 import { useNavigate } from 'react-router-dom';
-import { useWallet } from './WalletContext';
 import { useMindVaultIPContract } from '@/hooks/useContract';
+import { useEnsureBase } from '@/hooks/useEnsureBase';
 
 // Custom hook for SSR hydration guard
 function useIsMounted() {
@@ -43,17 +43,18 @@ export default function UnifiedWalletConnect() {
   const { open } = useWeb3Modal()
   const navigate = useNavigate()
   
-  // Use enhanced wallet context for better connection handling
-  const { 
-    connect, 
-    disconnect: walletDisconnect, 
-    shortAddress, 
-    isConnecting, 
-    connectionError
-  } = useWallet()
+  // Use wagmi hooks directly
+  const { open: connect } = useWeb3Modal()
+  const { disconnect: walletDisconnect } = useDisconnect()
+  const shortAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ""
+  const isConnecting = false // wagmi handles this internally
+  const connectionError = null // wagmi handles this internally
 
   // Get token balance from MindVaultIP contract
   const { balance: tokenBalance, formatTokenAmount } = useMindVaultIPContract()
+  
+  // Use the new network switching hook
+  const { isOnBase } = useEnsureBase()
   
   const [showMenu, setShowMenu] = useState(false);
   const [showError, setShowError] = useState(false);
@@ -113,7 +114,7 @@ export default function UnifiedWalletConnect() {
   };
 
   // ==========================================
-  // اتصال با MetaMask - Now using enhanced context
+  // اتصال با MetaMask - Now using Web3Modal
   // ==========================================
   const connectMetaMask = async () => {
     try {
@@ -203,19 +204,16 @@ export default function UnifiedWalletConnect() {
   // ==========================================
   // UI - اگر متصل است
   // ==========================================
-  const isWrongNetwork = chainId && chainId !== base.id; // base.id is 8453
+  const isWrongNetwork = isConnected && !isOnBase;
 
   return (
     <div className="relative" ref={menuRef}>
       {/* هشدار شبکه اشتباه */}
       {isWrongNetwork && (
         <div className="mb-3 px-4 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-          <button
-            onClick={switchToBase}
-            className="w-full text-sm text-yellow-400 hover:text-yellow-300 font-medium flex items-center justify-center gap-2"
-          >
-            ⚠️ Switch to Base Network
-          </button>
+          <div className="w-full text-sm text-yellow-400 font-medium flex items-center justify-center gap-2">
+            ⚠️ Switching to Base Network...
+          </div>
         </div>
       )}
 

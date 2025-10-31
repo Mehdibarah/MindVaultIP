@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+// Reporting disabled - Base44 removed, Supabase reports table not yet implemented
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -97,16 +97,10 @@ export default function ReportProofButton({ proofId }) {
     if (!reason || !isConnected || !address) return;
     setIsLoading(true);
     try {
-      await base44.entities.UserReport.create({
-        proof_id: proofId,
-        reporter_wallet: address,
-        report_reason: reason,
-        report_details: details,
-      });
-      alert(t.success);
-      setIsOpen(false);
-      setReason('');
-      setDetails('');
+      // Reporting feature disabled - Base44 removed
+      // TODO: Implement reporting using Supabase reports table
+      console.warn('Reporting not yet implemented with Supabase');
+      throw new Error('Reporting feature not yet available');
     } catch (error) {
       console.error("Failed to submit report:", error);
       alert(t.error);

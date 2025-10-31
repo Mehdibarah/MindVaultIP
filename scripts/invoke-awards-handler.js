@@ -1,4 +1,4 @@
-import handler from '../api/awards/issue.js';
+import handler from '../services/awards/issue.js';
 
 function makeRes(label) {
   return {

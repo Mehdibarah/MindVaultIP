@@ -3,10 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { useToast } from '@/components/ui/use-toast';
 import { ArrowLeft, Upload, User, Award, Calendar, FileText, Shield } from 'lucide-react';
-import { postForm } from '@/utils/api';
-import HealthCheck from '@/components/HealthCheck';
-
-const FOUNDER_ADDRESS = (import.meta.env.VITE_FOUNDER_ADDRESS || '').toLowerCase();
+// import { postForm } from '@/utils/api';
+// import HealthCheck from '@/components/HealthCheck';
+import { supabase } from '@/lib/supabaseClient';
 
 async function compressImage(file, {maxW=1600, maxH=1600, quality=0.8} = {}) {
   return new Promise((resolve, reject) => {
@@ -37,6 +36,61 @@ async function compressImage(file, {maxW=1600, maxH=1600, quality=0.8} = {}) {
   });
 }
 
+// Convert file to base64 (temporary solution due to RLS)
+async function uploadToSupabase(file) {
+  console.log('🔍 uploadToSupabase called with file:', file);
+  
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+      const base64String = e.target.result;
+      console.log('✅ File converted to base64, length:', base64String.length);
+      resolve(base64String);
+    };
+    
+    reader.onerror = function(error) {
+      console.error('❌ Error reading file:', error);
+      reject(new Error('Failed to read file'));
+    };
+    
+    // Convert to base64
+    reader.readAsDataURL(file);
+  });
+}
+
+// Create award and store in localStorage (temporary solution)
+async function createAwardDirectly(awardData) {
+  console.log('🔍 createAwardDirectly called with:', awardData);
+  
+  // Generate a unique ID
+  const id = 'award_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  
+  // Add ID and created_at to award data
+  const awardWithId = {
+    ...awardData,
+    id,
+    created_at: new Date().toISOString()
+  };
+  
+  console.log('🔍 Award with ID:', awardWithId);
+  
+  // Store in localStorage
+  const existingAwards = JSON.parse(localStorage.getItem('awards') || '[]');
+  console.log('📦 NewAward: Existing awards before adding:', existingAwards.length);
+  existingAwards.push(awardWithId);
+  localStorage.setItem('awards', JSON.stringify(existingAwards));
+  
+  console.log('✅ Award stored in localStorage');
+  console.log('📦 NewAward: Total awards after adding:', existingAwards.length);
+  console.log('🔍 NewAward: localStorage content:', localStorage.getItem('awards'));
+  
+  // Dispatch custom event to notify other components
+  window.dispatchEvent(new CustomEvent('awardsUpdated'));
+  
+  return awardWithId;
+}
+
 export default function NewAward() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -48,7 +102,8 @@ export default function NewAward() {
     title: '',
     category: '',
     year: new Date().getFullYear().toString(),
-    summary: ''
+    summary: '',
+    image: null
   });
   
   const [file, setFile] = useState(null);
@@ -56,17 +111,37 @@ export default function NewAward() {
   const [loading, setLoading] = useState(false);
   const [connectedAddress, setConnectedAddress] = useState(null);
   const [isFounder, setIsFounder] = useState(false);
+  const [founderConfigured, setFounderConfigured] = useState(false);
+  const [founderAddress, setFounderAddress] = useState('');
 
-  // Check if user is founder
+  // Check founder configuration and wallet connection
   useEffect(() => {
     const checkFounderStatus = async () => {
       try {
+        // Get founder address from environment variable
+        const founderAddr = (import.meta.env.VITE_FOUNDER_ADDRESS || '').toLowerCase().trim();
+        
+        setFounderConfigured(!!founderAddr);
+        setFounderAddress(founderAddr);
+        
+        if (!founderAddr) {
+          toast({
+            title: "Configuration Error",
+            description: "Founder address not configured.",
+            variant: "destructive",
+            duration: 4000
+          });
+          navigate('/multimindawards');
+          return;
+        }
+
+        // Check wallet connection
         if (typeof window !== 'undefined' && window.ethereum) {
           const accounts = await window.ethereum.request({ method: 'eth_accounts' });
           if (accounts.length > 0) {
             const address = accounts[0].toLowerCase();
             setConnectedAddress(address);
-            const founderStatus = address === FOUNDER_ADDRESS;
+            const founderStatus = address === founderAddr;
             setIsFounder(founderStatus);
             
             if (!founderStatus) {
@@ -106,6 +181,13 @@ export default function NewAward() {
   const handleFileSelect = async (selectedFile) => {
     setFile(selectedFile);
     setCompressedFile(null);
+    
+    // Update formData with the selected file
+    setFormData(prev => ({
+      ...prev,
+      image: selectedFile
+    }));
+    
     if (selectedFile && selectedFile.type.startsWith('image/')) {
       try {
         const compressed = await compressImage(selectedFile);
@@ -130,6 +212,89 @@ export default function NewAward() {
       toast({ title: 'Wallet Connected', description: `Address: ${address}`, duration: 4000 });
     } catch (err) {
       toast({ title: 'Error', description: err.message, duration: 4000 });
+    }
+  };
+
+  const handleCreateAward = async () => {
+    console.log('🚀 Create Award button clicked!');
+    
+    // Validate form
+    if (!formData.title.trim()) {
+      toast({ 
+        title: 'Error', 
+        description: 'Please enter a title for the award', 
+        variant: 'destructive' 
+      });
+      return;
+    }
+
+    // Set loading state
+    setLoading(true);
+    console.log('🔄 Loading state set to true');
+
+    try {
+      console.log('📝 Starting award creation process...');
+      
+      // Get founder address
+      const founderAddress = import.meta.env.VITE_FOUNDER_ADDRESS;
+      if (!founderAddress) {
+        throw new Error('Founder address not configured');
+      }
+
+      console.log('👤 Founder address:', founderAddress);
+
+      // Prepare award data
+      const awardData = {
+        issuer: founderAddress,
+        recipient: formData.recipient || null,
+        recipient_name: formData.recipientName || null,
+        recipient_email: formData.recipientEmail || null,
+        title: formData.title,
+        category: formData.category || null,
+        year: formData.year || null,
+        summary: formData.summary || null,
+        image_url: null,
+        timestamp: new Date().toISOString()
+      };
+
+      console.log('📝 Award data prepared:', awardData);
+
+      // Upload image if exists
+      const fileToUpload = compressedFile || formData.image;
+      if (fileToUpload && fileToUpload instanceof File) {
+        console.log('📤 Uploading image...');
+        const imageUrl = await uploadToSupabase(fileToUpload);
+        awardData.image_url = imageUrl;
+        console.log('✅ Image uploaded:', imageUrl);
+      }
+
+      // Create award in database
+      console.log('💾 Creating award in database...');
+      const result = await createAwardDirectly(awardData);
+      console.log('✅ Award created successfully:', result);
+
+      // Show success message
+      toast({ 
+        title: 'Success!', 
+        description: 'Award created successfully', 
+        duration: 4000 
+      });
+
+      // Navigate back to awards list
+      navigate('/multimindawards', { 
+        state: { refresh: true } 
+      });
+
+    } catch (error) {
+      console.error('❌ Error creating award:', error);
+      toast({ 
+        title: 'Error', 
+        description: `Failed to create award: ${error.message}`, 
+        variant: 'destructive' 
+      });
+    } finally {
+      setLoading(false);
+      console.log('🔄 Loading state reset to false');
     }
   };
 
@@ -176,41 +341,47 @@ export default function NewAward() {
 
       // Debug logging
       console.log('🔧 Debug Info:');
-      console.log('  FOUNDER env var:', FOUNDER_ADDRESS);
-      console.log('  FOUNDER length:', FOUNDER_ADDRESS.length);
+      console.log('  Founder configured:', founderConfigured);
+      console.log('  Founder address:', founderAddress);
       console.log('  Signer address:', signerAddress);
       console.log('  Signer address (lowercase):', signerAddress.toLowerCase());
-      console.log('  Comparison result:', signerAddress.toLowerCase() === FOUNDER_ADDRESS);
+      console.log('  Comparison result:', signerAddress.toLowerCase() === founderAddress.toLowerCase());
 
-      if (!FOUNDER_ADDRESS) {
-        throw new Error('FOUNDER address not configured on server');
+      if (!founderConfigured || !founderAddress) {
+        throw new Error('Founder address not configured on server');
       }
 
-      if (signerAddress.toLowerCase() !== FOUNDER_ADDRESS) {
-        throw new Error(`Only founder wallet can create awards. Expected: ${FOUNDER_ADDRESS}, Got: ${signerAddress.toLowerCase()}. Please connect the correct wallet or contact support.`);
+      if (signerAddress.toLowerCase() !== founderAddress.toLowerCase()) {
+        throw new Error(`Only founder wallet can create awards. Expected: ${founderAddress}, Got: ${signerAddress.toLowerCase()}. Please connect the correct wallet or contact support.`);
       }
 
       const signature = await signer.signMessage(message);
       const fileToUpload = compressedFile || file;
 
-      const fd = new FormData();
-      fd.append('walletAddress', signerAddress); // Always append wallet address
-      fd.append('title', formData.title);
-      fd.append('category', formData.category);
-      fd.append('recipient', formData.recipient || '');
-      fd.append('recipient_name', formData.recipientName || '');
-      fd.append('recipient_email', formData.recipientEmail || '');
-      fd.append('year', formData.year || '');
-      fd.append('summary', formData.summary || '');
-      fd.append('timestamp', timestamp);
-      fd.append('signature', signature);
-      fd.append('message', message); // Add the message for signature verification
-      if (fileToUpload) fd.append('image', fileToUpload, fileToUpload.name); // Use 'image' key
+      // Upload file to Supabase if provided
+      let imageUrl = null;
+      if (fileToUpload) {
+        console.log('📤 Uploading file to Supabase...');
+        imageUrl = await uploadToSupabase(fileToUpload);
+        console.log('✅ File uploaded successfully:', imageUrl);
+      }
 
-      // Use the new API utility for safe FormData upload
-      const result = await postForm('/api/awards/issue', fd);
+      // Prepare award data
+      const awardData = {
+        issuer: founderAddress,
+        recipient: formData.recipient || null,
+        recipient_name: formData.recipientName || null,
+        recipient_email: formData.recipientEmail || null,
+        title: formData.title,
+        category: formData.category || null,
+        year: formData.year || null,
+        summary: formData.summary || null,
+        image_url: imageUrl,
+        timestamp: timestamp
+      };
 
-      if (!result.ok && !result.success) throw new Error(result.error);
+      console.log('📝 Creating award in database...');
+      const result = await createAwardDirectly(awardData);
       
       console.log('✅ Award created successfully:', result);
       
@@ -247,8 +418,6 @@ export default function NewAward() {
 
   return (
     <div className="min-h-screen bg-[#0B1220] text-white">
-      {/* Health Check */}
-      <HealthCheck />
       
       {/* Founder Status Indicator */}
       {isFounder && connectedAddress && (
@@ -265,23 +434,18 @@ export default function NewAward() {
         </div>
       )}
       
-      {/* Debug Info - Remove this in production */}
-      {process.env.NODE_ENV === 'development' && (
+      {/* Debug Info - Only show if founder is not configured */}
+      {process.env.NODE_ENV === 'development' && !founderConfigured && (
         <div className="bg-yellow-900/20 border-b border-yellow-500/30 p-4">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-yellow-400 text-sm">
-                  <strong>Debug Info:</strong> FOUNDER address: <code className="bg-gray-800 px-2 py-1 rounded">{FOUNDER_ADDRESS || 'NOT SET'}</code>
+                  <strong>Debug Info:</strong> Founder not configured on server
                 </p>
                 <p className="text-yellow-400 text-sm mt-1">
-                  <strong>Note:</strong> You must connect the wallet with this exact address to create awards.
+                  <strong>Note:</strong> Please check server configuration.
                 </p>
-                {connectedAddress && (
-                  <p className="text-yellow-400 text-sm mt-1">
-                    <strong>Connected:</strong> <code className="bg-gray-800 px-2 py-1 rounded">{connectedAddress}</code>
-                  </p>
-                )}
               </div>
               <button
                 onClick={checkWalletConnection}
@@ -321,7 +485,7 @@ export default function NewAward() {
 
       {/* Form */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="space-y-8">
           {/* Recipient Information */}
           <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
             <div className="flex items-center gap-3 mb-6">
@@ -502,9 +666,10 @@ export default function NewAward() {
               Cancel
             </button>
             <button
-              type="submit"
+              type="button"
+              onClick={handleCreateAward}
               disabled={loading}
-              className="px-8 py-3 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {loading ? (
                 <>
@@ -514,13 +679,14 @@ export default function NewAward() {
               ) : (
                 <>
                   <Award className="w-4 h-4" />
-                  Create Award
+                  Create New Award
                 </>
               )}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
 }
+

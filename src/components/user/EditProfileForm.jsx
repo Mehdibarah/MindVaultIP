@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { User } from '@/api/entities';
+import { User } from '@/services/entities';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
 import { Loader2, User as UserIcon } from 'lucide-react';
-import { UploadFile } from '@/api/integrations';
+import { UploadFile } from '@/services/integrations';
 
 const formTranslations = {
   en: {
