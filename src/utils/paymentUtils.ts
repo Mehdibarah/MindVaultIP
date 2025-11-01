@@ -14,14 +14,14 @@ export interface PaymentResult {
 
 /**
  * Gets the appropriate provider from window.ethereum
- * Handles both MetaMask and Coinbase Wallet
+ * Handles MetaMask and other EIP-1193 compatible wallets
  */
 function getProvider(): ethers.providers.Web3Provider | null {
   if (typeof window === 'undefined' || !window.ethereum) {
     return null;
   }
 
-  // Handle multiple providers (MetaMask, Coinbase Wallet, etc.)
+  // Handle multiple providers (MetaMask, etc.)
   const ethereum = window.ethereum;
   
   // If there are multiple providers, prefer the currently selected one
@@ -94,7 +94,7 @@ export async function payRegistrationFee(): Promise<PaymentResult> {
   if (!provider) {
     return {
       success: false,
-      error: 'No wallet provider found. Please install MetaMask or Coinbase Wallet.',
+      error: 'No wallet provider found. Please install MetaMask.',
     };
   }
 
@@ -134,22 +134,84 @@ export async function payRegistrationFee(): Promise<PaymentResult> {
       // No data field = simple ETH transfer (not a contract call)
     });
 
-    // Wait for transaction to be mined
+    console.log('[paymentUtils] Transaction sent:', tx.hash);
+    console.log('[paymentUtils] Transaction link: https://basescan.org/tx/' + tx.hash);
+
+    // Wait for transaction to be mined - at least 1 block
+    console.log('[paymentUtils] Waiting for confirmation...');
     const receipt = await tx.wait();
     
-    if (receipt?.status === 1) {
-      return {
-        success: true,
-        hash: receipt.hash,
-      };
-    } else {
+    // ✅ CRITICAL: Only return success if receipt.status === 1
+    if (!receipt || receipt.status !== 1) {
       return {
         success: false,
-        error: 'Transaction failed',
+        error: 'Transaction failed or was reverted on blockchain. Status: ' + (receipt?.status || 'unknown'),
       };
     }
+
+    console.log('[paymentUtils] ✅ Payment confirmed on blockchain:', {
+      hash: receipt.hash,
+      blockNumber: receipt.blockNumber,
+      status: receipt.status
+    });
+
+    return {
+      success: true,
+      hash: receipt.hash,
+    };
   } catch (error: any) {
-    console.error('Payment error:', error);
+    console.error('[paymentUtils] Payment error:', error);
+    
+    // Handle specific error types
+    if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
+      return {
+        success: false,
+        error: 'Transaction was rejected by user.',
+      };
+    } else if (error.code === 'TRANSACTION_REPLACED') {
+      // Transaction was replaced (Speed Up/Cancel)
+      if (error.cancelled) {
+        return {
+          success: false,
+          error: 'Transaction was cancelled (replaced by user).',
+        };
+      } else {
+        // Transaction was replaced but might have succeeded
+        console.warn('[paymentUtils] Transaction replaced, waiting for replacement...');
+        try {
+          const rep = error.replacement;
+          const repReceipt = await rep.wait();
+          if (repReceipt.status === 1) {
+            console.log('[paymentUtils] ✅ Replacement transaction confirmed:', repReceipt.hash);
+            return {
+              success: true,
+              hash: repReceipt.hash,
+            };
+          } else {
+            return {
+              success: false,
+              error: 'Replacement transaction failed or was reverted.',
+            };
+          }
+        } catch (repError: any) {
+          return {
+            success: false,
+            error: 'Replacement transaction failed: ' + (repError.message || 'Unknown error'),
+          };
+        }
+      }
+    } else if (error.code === 'CALL_EXCEPTION' || error.code === -32000) {
+      return {
+        success: false,
+        error: 'Transaction execution failed. Please check contract requirements.',
+      };
+    } else if (error.code === 'INSUFFICIENT_FUNDS') {
+      return {
+        success: false,
+        error: 'Insufficient ETH balance for transaction (fee + gas).',
+      };
+    }
+    
     return {
       success: false,
       error: error.message || 'Payment failed',

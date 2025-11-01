@@ -135,9 +135,9 @@ export default function NewAward() {
           return;
         }
 
-        // Check wallet connection
+        // Request wallet connection
         if (typeof window !== 'undefined' && window.ethereum) {
-          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
           if (accounts.length > 0) {
             const address = accounts[0].toLowerCase();
             setConnectedAddress(address);

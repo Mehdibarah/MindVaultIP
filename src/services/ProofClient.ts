@@ -47,25 +47,29 @@ export interface ProofClient {
  * Base44 Proof Client
  */
 export class Base44ProofClient implements ProofClient {
-  constructor(private base44: any) {}
+  // ✅ base44 parameter removed - not used (Base44 is disabled)
+  constructor(_base44: any) {}
 
-  async create(data: Partial<Proof>): Promise<Proof> {
+  async create(_data: Partial<Proof>): Promise<Proof> {
+    // ✅ _data prefixed with _ - not used (Base44 is disabled)
     // Base44 is disabled - this should never be called
     throw new Error('Base44 is disabled. Use SupabaseProofClient instead.');
   }
 
-  async get(id: string | number): Promise<Proof | null> {
+  async get(_id: string | number): Promise<Proof | null> {
+    // ✅ _id prefixed with _ - not used (Base44 is disabled)
     // Base44 is disabled - this should never be called
     console.warn('[Base44ProofClient] Base44 is disabled, returning null');
     return null;
   }
 
-  async update(id: string | number, data: Partial<Proof>): Promise<Proof> {
+  async update(_id: string | number, _data: Partial<Proof>): Promise<Proof> {
     // Base44 is disabled - this should never be called
     throw new Error('Base44 is disabled. Use SupabaseProofClient instead.');
   }
 
-  async filter(query: any): Promise<Proof[]> {
+  async filter(_query: any): Promise<Proof[]> {
+    // ✅ _query prefixed with _ - not used (Base44 is disabled)
     // Base44 is disabled - this should never be called
     console.warn('[Base44ProofClient] Base44 is disabled, returning empty array');
     return [];

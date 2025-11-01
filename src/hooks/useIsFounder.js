@@ -11,10 +11,10 @@ export function useIsFounder() {
         // Always set loading to false first for public access
         setLoading(false);
         
-        // Check if wallet is connected
+        // Request wallet connection
         if (typeof window !== 'undefined' && window.ethereum) {
           try {
-            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             if (accounts.length > 0) {
               const address = accounts[0].toLowerCase();
               setConnectedAddress(address);

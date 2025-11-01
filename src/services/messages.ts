@@ -2,7 +2,8 @@
  * Message API client for private 1:1 chats
  */
 
-import { getConversationId, validateMessage, generateMessageId } from '@/utils/conversationUtils';
+// ✅ getConversationId removed - not used
+import { validateMessage, generateMessageId } from '@/utils/conversationUtils';
 
 // Message data model
 export interface Message {

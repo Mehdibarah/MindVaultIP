@@ -3,8 +3,14 @@
  * Checks if contract registration fee matches frontend configuration
  */
 
-import { createPublicClient, http, parseEther } from 'viem';
+import { createPublicClient, http } from 'viem';
 import { base } from 'wagmi/chains';
+// ✅ Using ethers v5 for parseEther (not viem)
+import { ethers } from 'ethers';
+// Helper to convert ethers BigNumber to string for comparison
+const parseEther = (value: string): string => {
+  return ethers.utils.parseEther(value).toString();
+};
 import { REGISTRATION_FEE } from '@/lib/contracts';
 import { getContractAddress } from '@/lib/contracts';
 
@@ -37,8 +43,9 @@ export async function checkContractFee(): Promise<{
     });
 
     // Try to read fee from contract
-    // Common function names: registrationFee, regFee, REGISTRATION_FEE
+    // Common function names: fee, registrationFee, regFee, REGISTRATION_FEE, getRegistrationFee
     const possibleFunctions = [
+      'fee', // ✅ Try 'fee' first (most common in newer contracts)
       'registrationFee',
       'regFee',
       'REGISTRATION_FEE',
@@ -85,9 +92,11 @@ export async function checkContractFee(): Promise<{
 
     const contractFeeEth = Number(contractFeeWei) / 1e18;
     const frontendFeeNum = parseFloat(REGISTRATION_FEE.AMOUNT);
-    const frontendFeeWei = parseEther(REGISTRATION_FEE.AMOUNT);
+    // ✅ Using ethers v5 utils.parseEther - convert to string for comparison
+    const frontendFeeWei = ethers.utils.parseEther(REGISTRATION_FEE.AMOUNT).toString();
 
-    const match = contractFeeWei === frontendFeeWei;
+    // Compare as strings (both contractFeeWei and frontendFeeWei are strings now)
+    const match = contractFeeWei.toString() === frontendFeeWei;
     const difference = Math.abs(contractFeeEth - frontendFeeNum);
 
     return {
@@ -109,39 +118,55 @@ export async function checkContractFee(): Promise<{
 
 /**
  * Log fee comparison to console
+ * ✅ SAFE: Won't crash the app, handles all errors gracefully
  */
 export async function logFeeComparison(): Promise<void> {
-  console.log('[ContractFeeChecker] 🔍 Checking fee match...');
-  
-  const result = await checkContractFee();
+  try {
+    console.log('[ContractFeeChecker] 🔍 Checking fee match...');
+    
+    const result = await checkContractFee();
 
-  if (result.error) {
-    // If contract doesn't have a public fee function, that's OK - UI uses fixed 0.001 ETH
-    if (result.error.includes('Could not read fee')) {
-      console.log('[ContractFeeChecker] ⚠️  Contract fee not readable (no public function)');
-      console.log('[ContractFeeChecker]   Using fixed frontend fee:', result.frontendFee, 'ETH');
-      console.log('[ContractFeeChecker]   This is normal if contract fee is immutable/hardcoded');
-    } else {
-      console.warn('[ContractFeeChecker] ⚠️', result.error);
+    if (result.error) {
+      // If contract doesn't have a public fee function, that's OK - UI uses fixed 0.001 ETH
+      if (result.error.includes('Could not read fee')) {
+        console.log('[ContractFeeChecker] ⚠️  Contract fee not readable (no public function)');
+        console.log('[ContractFeeChecker]   Using fixed frontend fee:', result.frontendFee, 'ETH');
+        console.log('[ContractFeeChecker]   This is normal if contract fee is immutable/hardcoded');
+        return; // ✅ Early return - this is expected, not an error
+      } else {
+        console.warn('[ContractFeeChecker] ⚠️', result.error);
+        return; // ✅ Return on error to prevent crash
+      }
     }
-    return;
-  }
 
-  console.log('[ContractFeeChecker] 📊 Contract Fee:', result.contractFee, 'ETH');
-  console.log('[ContractFeeChecker] 📤 Frontend Fee:', result.frontendFee, 'ETH');
+    console.log('[ContractFeeChecker] 📊 Contract Fee:', result.contractFee, 'ETH');
+    console.log('[ContractFeeChecker] 📤 Frontend Fee:', result.frontendFee, 'ETH');
 
-  if (result.match) {
-    console.log('[ContractFeeChecker] ✅ Fees match!');
-  } else {
-    console.warn('[ContractFeeChecker] ⚠️  FEES DO NOT MATCH!');
-    console.warn('[ContractFeeChecker]   Contract expects:', result.contractFee, 'ETH');
-    console.warn('[ContractFeeChecker]   Frontend sends:', result.frontendFee, 'ETH');
-    console.warn('[ContractFeeChecker]   Difference:', result.difference, 'ETH');
-    console.warn('[ContractFeeChecker]');
-    console.warn('[ContractFeeChecker] 🔧 To fix:');
-    console.warn('[ContractFeeChecker]   1. If contract has setRegistrationFee(): call it with', parseEther(result.frontendFee).toString());
-    console.warn('[ContractFeeChecker]   2. If immutable: deploy new contract with fee =', result.frontendFee, 'ETH');
-    console.warn('[ContractFeeChecker]   3. Update VITE_CONTRACT_ADDRESS in .env');
+    if (result.match) {
+      console.log('[ContractFeeChecker] ✅ Fees match!');
+    } else {
+      console.warn('[ContractFeeChecker] ⚠️  FEES DO NOT MATCH!');
+      console.warn('[ContractFeeChecker]   Contract expects:', result.contractFee, 'ETH');
+      console.warn('[ContractFeeChecker]   Frontend sends:', result.frontendFee, 'ETH');
+      console.warn('[ContractFeeChecker]   Difference:', result.difference, 'ETH');
+      console.warn('[ContractFeeChecker]');
+      console.warn('[ContractFeeChecker] 🔧 To fix:');
+      // ✅ Using ethers v5 utils.parseEther - with error handling
+      try {
+        const fixFeeWei = ethers.utils.parseEther(result.frontendFee).toString();
+        console.warn('[ContractFeeChecker]   1. If contract has setRegistrationFee(): call it with', fixFeeWei);
+      } catch (parseError) {
+        // If parseEther fails, just show ETH value
+        console.warn('[ContractFeeChecker]   1. If contract has setRegistrationFee(): call it with fee =', result.frontendFee, 'ETH');
+      }
+      console.warn('[ContractFeeChecker]   2. If immutable: deploy new contract with fee =', result.frontendFee, 'ETH');
+      console.warn('[ContractFeeChecker]   3. Update VITE_CONTRACT_ADDRESS in .env');
+    }
+  } catch (error) {
+    // ✅ Silently handle any errors - don't crash the app
+    // This is a diagnostic function, not critical for app functionality
+    console.warn('[ContractFeeChecker] ⚠️  Fee check failed (non-critical, app continues):', error.message || String(error));
+    // Don't throw - this function is called on startup and shouldn't break the app
   }
 }
 

@@ -1,5 +1,5 @@
 import { createConfig, http } from 'wagmi'
-import { injected, coinbaseWallet, walletConnect } from 'wagmi/connectors'
+import { injected, walletConnect } from 'wagmi/connectors'
 import { QueryClient } from '@tanstack/react-query'
 import { createWeb3Modal } from '@web3modal/wagmi/react'
 import { base, mainnet } from 'wagmi/chains'
@@ -9,7 +9,6 @@ export const wagmiConfig = createConfig({
   chains: [base, mainnet],
   connectors: [
     injected({ shimDisconnect: true }),
-    coinbaseWallet({ appName: 'MindVaultIP' }),
     walletConnect({ projectId: import.meta.env.VITE_WC_PROJECT_ID || '1279cd8b19e9ce4ba19e81e410bc4552' }),
   ],
   transports: {
@@ -27,7 +26,7 @@ export function setupWeb3Modal() {
   createWeb3Modal({
     wagmiConfig,
     projectId: import.meta.env.VITE_WC_PROJECT_ID || '1279cd8b19e9ce4ba19e81e410bc4552',
-    chains: [base, mainnet],
+    // ✅ chains property removed - not a valid option in current Web3Modal version (chains come from wagmiConfig)
   })
 }
 

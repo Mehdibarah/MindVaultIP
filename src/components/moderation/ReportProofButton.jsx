@@ -79,7 +79,8 @@ export default function ReportProofButton({ proofId }) {
       setAddress(accounts[0] || null);
     };
 
-    window.ethereum.request({ method: 'eth_accounts' })
+    // Request account access (not just check)
+    window.ethereum.request({ method: 'eth_requestAccounts' })
       .then(handleAccountsChanged)
       .catch(console.error);
 

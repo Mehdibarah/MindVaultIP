@@ -1,17 +1,11 @@
 {
+  "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/storage/:path*",
-      "destination": "https://ycivhrsvatslktkxqtrh.supabase.co/storage/:path*"
-    },
-    {
-      "source": "/storage/v1/:path*",
-      "destination": "https://ycivhrsvatslktkxqtrh.supabase.co/storage/v1/:path*"
-    },
-    {
-      "source": "/storage/v1/object/public/:bucket/:rest*",
-      "destination": "https://ycivhrsvatslktkxqtrh.supabase.co/storage/v1/object/public/:bucket/:rest*"
+      "source": "/((?!api|_next|_static|favicon.ico).*)",
+      "destination": "/index.html"
     }
-  ],
-  "cleanUrls": true
+  ]
 }

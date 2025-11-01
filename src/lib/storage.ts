@@ -42,7 +42,7 @@ export async function initializeBucket(): Promise<boolean> {
 
           // If the SQL function is missing or not callable, try direct bucket creation as a fallback.
           try {
-            const { data: createData, error: createError } = await supabase.storage.createBucket(BUCKET, {
+            const { data: _createData, error: createError } = await supabase.storage.createBucket(BUCKET, {
               public: true,
               allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'],
               fileSizeLimit: 10 * 1024 * 1024 // 10MB limit
@@ -72,8 +72,9 @@ export async function initializeBucket(): Promise<boolean> {
                 console.warn('⚠️ Please run the SQL setup script in SUPABASE_STORAGE_SETUP.md to install required functions and policies.');
               } else {
               }
-            } catch (rpcErr) {
-              console.warn('⚠️ Could not call create_bucket_policy RPC:', rpcErr.message || rpcErr);
+            } catch (rpcErr: unknown) {
+              const errorMessage = rpcErr instanceof Error ? rpcErr.message : String(rpcErr);
+              console.warn('⚠️ Could not call create_bucket_policy RPC:', errorMessage);
               console.warn('⚠️ Please run the SQL setup script in SUPABASE_STORAGE_SETUP.md to install required functions and policies.');
             }
 
@@ -252,7 +253,7 @@ export async function ensureAwardsBucket(): Promise<boolean> {
             
             // Fallback to direct bucket creation
             try {
-              const { data: createData, error: createError } = await supabase.storage.createBucket(BUCKET, {
+              const { data: _createData, error: createError } = await supabase.storage.createBucket(BUCKET, {
                 public: true,
                 allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'],
                 fileSizeLimit: 10 * 1024 * 1024 // 10MB limit
@@ -319,8 +320,9 @@ export async function ensureAwardsBucket(): Promise<boolean> {
 
 /**
  * Check and ensure bucket exists before upload (legacy function for compatibility)
+ * ✅ Exported for backwards compatibility
  */
-async function ensureBucketExists(): Promise<boolean> {
+export async function ensureBucketExists(): Promise<boolean> {
   return await ensureAwardsBucket();
 }
 

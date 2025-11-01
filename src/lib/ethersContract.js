@@ -165,7 +165,8 @@ export async function getCurrentAccount() {
   try {
     if (!window.ethereum) return null;
     
-    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+    // Request account access (not just check)
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
     return accounts.length > 0 ? accounts[0] : null;
   } catch (error) {
     console.error('Failed to get current account:', error);
@@ -343,8 +344,8 @@ async function createDefaultContract() {
     // Try to get MetaMask provider first
     if (typeof window !== "undefined" && window.ethereum) {
       try {
-        // Check if already connected
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        // Request account access (not just check)
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         
         if (accounts.length > 0) {
           // MetaMask is connected, use it

@@ -1,7 +1,18 @@
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useSendTransaction, useChainId } from 'wagmi'
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useSendTransaction } from 'wagmi' // ✅ useChainId removed - not used
 import { useAccount, useBalance } from 'wagmi'
-import { parseEther, formatEther } from 'viem'
+// ✅ Using ethers v5 - parseEther and formatEther are in utils (NOT viem)
+import { ethers } from 'ethers'
+// Helper functions to convert viem-style calls to ethers v5
+const parseEther = (value: string): bigint => {
+  const bn = ethers.utils.parseEther(value);
+  return BigInt(bn.toString()); // Convert ethers BigNumber to native bigint for viem compatibility
+};
+const formatEther = (value: bigint | string): string => {
+  return ethers.utils.formatEther(value.toString());
+};
 import { contractConfig, paymentContractConfig, getContractAddress, REGISTRATION_FEE } from '@/lib/contracts'
+// ✅ TypeScript: Add type declaration for JS module
+// @ts-ignore - JS module without type definitions
 import { useEthersContract } from './useEthersContract'
 
 // Hook for reading MindVaultIP Core contract
@@ -37,7 +48,7 @@ export function useMindVaultIPContract() {
   }
 
   return {
-    balance: balance ? formatEther(balance) : '0',
+    balance: balance ? formatEther(balance.toString()) : '0', // ✅ Convert bigint to string
     balanceRaw: balance,
     decimals,
     isLoading: balanceLoading || decimalsLoading,
@@ -94,7 +105,7 @@ export function usePaymentContract() {
 // Hook for ETH payments (registration fees)
 export function useETHPayment() {
   const { address } = useAccount()
-  const chainId = useChainId()
+  // ✅ chainId removed - not used
   const { data: ethBalance } = useBalance({ address })
   const { sendTransaction, data: hash, error, isPending } = useSendTransaction()
   
@@ -173,7 +184,7 @@ export function useContractUtils() {
   }
 
   // Format token amount for display
-  const formatTokenAmount = (amount: string, decimals: number = 18) => {
+  const formatTokenAmount = (amount: string) => { // ✅ decimals parameter removed - not used
     try {
       const num = parseFloat(amount)
       if (num === 0) return '0'

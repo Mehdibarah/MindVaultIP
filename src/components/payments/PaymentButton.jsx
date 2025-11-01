@@ -33,15 +33,16 @@ export default function PaymentButton({
   // Check if on correct network
   const isCorrectNetwork = chainId === base.id || chainId === config?.chainId;
 
-  // Call success callback as soon as we get the transaction hash
-  // Proceed with registration immediately - don't wait for blockchain confirmation
+  // Only call success callback after transaction is confirmed on blockchain
+  // Wait for receipt.status === 1 before proceeding with registration
   useEffect(() => {
-    if (txHash) {
-      // Transaction hash is available - proceed with registration immediately
-      console.log('[PaymentButton] Payment transaction hash received:', txHash);
+    if (isConfirmed && txHash) {
+      // Transaction is confirmed on blockchain - receipt.status === 1
+      console.log('[PaymentButton] ✅ Payment confirmed on blockchain:', txHash);
+      console.log('[PaymentButton] Transaction link: https://basescan.org/tx/' + txHash);
       onPaymentSuccess?.(txHash);
     }
-  }, [txHash, onPaymentSuccess]);
+  }, [isConfirmed, txHash, onPaymentSuccess]);
 
   // Handle transaction errors
   useEffect(() => {

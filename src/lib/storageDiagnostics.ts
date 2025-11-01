@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+// ✅ supabase import removed - not used in this file
 
 /**
  * Log Supabase environment configuration

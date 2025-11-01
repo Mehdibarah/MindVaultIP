@@ -40,8 +40,9 @@ async function checkFee() {
     console.log('  Network: Base Mainnet (8453)\n');
 
     // سعی می‌کنیم fee را از کانترکت بخوانیم
-    // چند تابع رایج: registrationFee(), regFee(), REGISTRATION_FEE()
+    // چند تابع رایج: fee(), registrationFee(), regFee(), REGISTRATION_FEE()
     const possibleFunctions = [
+      'fee', // ✅ Try 'fee' first (most common)
       'registrationFee',
       'regFee', 
       'REGISTRATION_FEE',

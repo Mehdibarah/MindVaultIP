@@ -8,9 +8,13 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   
   return {
+    base: '/', // ✅ خیلی مهم - همه assets از root خوانده می‌شوند
     plugins: [react()],
     server: {
       allowedHosts: true
+    },
+    build: {
+      outDir: 'dist' // ✅ مطمئن شو output directory درست است
     },
     resolve: {
       alias: {

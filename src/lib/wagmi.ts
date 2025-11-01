@@ -1,5 +1,5 @@
 import { createConfig, http } from 'wagmi'
-import { injected, coinbaseWallet, walletConnect } from 'wagmi/connectors'
+import { injected, walletConnect } from 'wagmi/connectors'
 import { QueryClient } from '@tanstack/react-query'
 import { createWeb3Modal } from '@web3modal/wagmi/react'
 import { base, mainnet } from 'wagmi/chains'
@@ -11,11 +11,7 @@ export const wagmiConfig = createConfig({
   connectors: [
     injected({ 
       shimDisconnect: true,
-      shimChainChangedDisconnect: true, // Faster chain switching
-    }),
-    coinbaseWallet({ 
-      appName: 'MindVaultIP',
-      appLogoUrl: undefined, // Skip logo loading for faster init
+      // ✅ shimChainChangedDisconnect removed - not a valid option in current wagmi version
     }),
     walletConnect({ 
       projectId: import.meta.env.VITE_WC_PROJECT_ID || '1279cd8b19e9ce4ba19e81e410bc4552',
@@ -43,7 +39,7 @@ export const wagmiConfig = createConfig({
     }),
   },
   ssr: true,
-  storage: typeof window !== 'undefined' ? localStorage : undefined,
+  storage: typeof window !== 'undefined' ? (localStorage as any) : undefined, // ✅ Type assertion for wagmi storage compatibility
   // Add connection timeout and retry settings
   multiInjectedProviderDiscovery: true, // Better provider detection
 })
@@ -79,20 +75,19 @@ export function setupWeb3Modal() {
   createWeb3Modal({
     wagmiConfig,
     projectId: import.meta.env.VITE_WC_PROJECT_ID || '1279cd8b19e9ce4ba19e81e410bc4552',
-    chains: [base, mainnet],
+    // ✅ chains removed - chains come from wagmiConfig, not Web3Modal options
     enableAnalytics: false, // Disable analytics for faster loading
     enableOnramp: false, // Disable onramp for faster loading
     themeMode: 'dark',
-    themeVariables: {
-      '--wcm-z-index': '1000',
-      '--wcm-accent-color': '#3b82f6',
-      '--wcm-border-radius-master': '8px',
-    },
+    // ✅ Removed themeVariables - some properties may not be supported in current Web3Modal version
+    // themeVariables: {
+    //   '--wcm-accent-color': '#3b82f6',
+    //   '--wcm-border-radius-master': '8px',
+    // },
     // Optimize modal behavior
     defaultChain: base,
     featuredWalletIds: [
       'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
-      '4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0', // Coinbase Wallet
       '19177a98252e07ddfc9af2083ba8e07ef627cb6103467ffebb3f8f4205fd7927', // Ledger Live
     ],
   })

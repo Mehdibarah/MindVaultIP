@@ -19,7 +19,7 @@ const MVA_SYS = `You are AI Mentor for MindVaultIP.
 // Mock OpenAI client (replace with actual OpenAI in production)
 class MockOpenAI {
   async chatCompletionsCreate(params: any) {
-    const { messages, model, temperature, max_tokens } = params;
+    const { messages } = params; // ✅ max_tokens removed - not used
     const lastMessage = messages[messages.length - 1];
     const content = lastMessage.content;
     

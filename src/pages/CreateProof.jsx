@@ -45,6 +45,14 @@ export default function CreateProof() {
     const [fileHash, setFileHash] = useState('');
     const [paymentHash, setPaymentHash] = useState('');
     
+    // State machine for step completion tracking
+    const [done, setDone] = useState({
+      prep: false,   // Step 1: Preparation (file hash calculation)
+      upload: false, // Step 2: File upload to Supabase storage
+      db: false,     // Step 3: Database record creation
+      chain: false,  // Step 4: Blockchain confirmation
+    });
+    
     // UI State
     const [dragActive, setDragActive] = useState(false);
     const fileInputRef = useRef(null);
@@ -154,14 +162,15 @@ export default function CreateProof() {
     };
 
     // Payment handlers
+    // ✅ IMPORTANT: hash is only provided after receipt.status === 1 (confirmed on blockchain)
     const handlePaymentSuccess = (hash) => {
-        console.log('[CreateProof] Payment successful, hash:', hash);
+        console.log('[CreateProof] ✅ Payment confirmed on blockchain, hash:', hash);
         if (hash) {
             setPaymentHash(hash);
         }
         setStatus('uploading');
         setStep(1);
-        // Proceed with registration after payment
+        // Proceed with registration after payment is confirmed
         proceedWithRegistration();
     };
 
@@ -172,9 +181,86 @@ export default function CreateProof() {
 
     const proceedWithRegistration = async () => {
         try {
-            // Step 2: Register Proof in Supabase first to get proofId
+            // Reset state machine
+            setDone({ prep: false, upload: false, db: false, chain: false });
+            
+            // Step 1: Preparation is already done (fileHash calculated)
+            setDone(d => ({ ...d, prep: true }));
+            setStep(1);
+            
+            // Step 2: Upload file to Supabase storage FIRST (before DB/chain)
             setStep(2);
+            console.log('[CreateProof] Step 2: Uploading file to Supabase storage...');
+            
+            // Generate proofId early for idempotency
+            // Use fileHash + address + timestamp for deterministic but unique ID
+            // If same file + same user, same proofId (idempotency)
+            const proofIdSeed = `${fileHash}_${address}_${Date.now()}`;
+            // Create UUID-like ID from hash (for idempotency, check if exists by file_hash+created_by)
+            let proofId = crypto.randomUUID();
+            
+            // Check for existing proof with same file_hash and created_by (idempotency)
+            const { proofClient } = await import('@/services/index');
+            const client = await proofClient();
+            const existingProofs = await client.filter({ 
+                file_hash: fileHash,
+                created_by: address 
+            });
+            
+            if (existingProofs && existingProofs.length > 0) {
+                // Use existing proof ID
+                proofId = existingProofs[0].id;
+                console.log('[CreateProof] Found existing proof for same file:', proofId);
+            }
+            
+            const storagePath = `${proofId}/${file.name}`;
+            
+            let storageUrl = null;
+            try {
+                const uploadResult = await uploadProofFile(storagePath, file);
+                
+                if (uploadResult.error) {
+                    throw uploadResult.error;
+                }
+                
+                // Verify upload succeeded (200 OK)
+                if (uploadResult.publicUrl) {
+                    storageUrl = uploadResult.publicUrl;
+                    // Verify URL is accessible
+                    const testResponse = await fetch(storageUrl, { method: 'HEAD' });
+                    if (testResponse.ok) {
+                        console.log('[CreateProof] ✅ Step 2 complete: File uploaded and verified');
+                        setDone(d => ({ ...d, upload: true }));
+                    } else {
+                        throw new Error(`Upload verification failed: ${testResponse.status}`);
+                    }
+                } else {
+                    const { data: urlData } = getPublicUrl(storagePath);
+                    storageUrl = urlData?.publicUrl || null;
+                    if (storageUrl) {
+                        const testResponse = await fetch(storageUrl, { method: 'HEAD' });
+                        if (testResponse.ok) {
+                            console.log('[CreateProof] ✅ Step 2 complete: File uploaded and verified');
+                            setDone(d => ({ ...d, upload: true }));
+                        } else {
+                            throw new Error(`Upload verification failed: ${testResponse.status}`);
+                        }
+                    }
+                }
+            } catch (uploadError) {
+                console.error('[CreateProof] Step 2 failed:', uploadError);
+                throw new Error(`File upload failed: ${uploadError.message}`);
+            }
+            
+            // Step 3: Create DB record (BEFORE blockchain tx - for faster Step 3 completion)
+            setStep(3);
+            console.log('[CreateProof] Step 3: Creating database record...');
+            
+            // client is already imported above
+            
+            // Create proof record with proofId for idempotency
             const proofData = {
+                id: proofId, // Use generated UUID for idempotency
                 title,
                 category,
                 description,
@@ -184,81 +270,60 @@ export default function CreateProof() {
                 file_type: file.type,
                 is_public: isPublic,
                 payment_hash: paymentHash,
+                ipfs_hash: storageUrl,
                 created_by: address || undefined,
+                // tx_hash will be updated after blockchain confirmation
             };
             
-            console.log('[CreateProof] Registering proof with data:', proofData);
-            
-            // Create proof using Supabase client
-            const { proofClient } = await import('@/services/index');
-            const client = await proofClient();
-            const registrationResult = await client.create(proofData);
-
-            if (!registrationResult || !registrationResult.id) {
-                throw new Error(t.proofRegistrationError || 'Failed to register proof.');
-            }
-
-            const proofId = registrationResult.id;
-            console.log('[CreateProof] Proof registered successfully:', proofId);
-
-            // Step 3: Upload file to Supabase storage after payment succeeds and proof is created
-            setStep(3);
-            let storageUrl = null;
-            
+            // Use upsert for idempotency (if same proofId exists, update it)
+            let registrationResult;
             try {
-                console.log('[CreateProof] Uploading file to Supabase storage...');
-                
-                // Upload file with path based on proofId
-                // Path format: ${proofId}/${file.name} (bucket 'proofs' is already in .from())
-                // SDK automatically handles URL encoding for special characters in file names
-                const path = `${proofId}/${file.name}`;
-                const uploadResult = await uploadProofFile(path, file);
-                
-                if (uploadResult.error) {
-                    throw uploadResult.error;
+                registrationResult = await client.create(proofData);
+                if (!registrationResult || !registrationResult.id) {
+                    throw new Error('Failed to create proof record');
                 }
-                
-                console.log('[CreateProof] ✅ File upload result:', uploadResult.data);
-                
-                // Get public URL from upload result (already encoded by SDK)
-                // Or get it separately if not included in upload result
-                if (uploadResult.publicUrl) {
-                    storageUrl = uploadResult.publicUrl;
+                console.log('[CreateProof] ✅ Step 3 complete: Database record created');
+                setDone(d => ({ ...d, db: true }));
+            } catch (dbError) {
+                // If record already exists (idempotency), try to update it
+                if (dbError.message?.includes('duplicate') || dbError.message?.includes('already exists')) {
+                    console.log('[CreateProof] Record already exists, updating...');
+                    registrationResult = await client.update(proofId, proofData);
+                    setDone(d => ({ ...d, db: true }));
                 } else {
-                    // Fallback: get URL separately (SDK handles encoding)
-                    const { data: urlData } = getPublicUrl(path);
-                    storageUrl = urlData?.publicUrl || null;
+                    throw dbError;
                 }
-                
-                console.log('[CreateProof] ✅ Public URL:', storageUrl);
-                
-                // Verify URL is accessible
-                if (storageUrl) {
-                    try {
-                        const testResponse = await fetch(storageUrl, { method: 'HEAD' });
-                        if (testResponse.ok) {
-                            console.log('[CreateProof] ✅ URL verified:', testResponse.status, testResponse.headers.get('content-type'));
-                        } else {
-                            console.warn('[CreateProof] ⚠️  URL returns status:', testResponse.status);
-                        }
-                    } catch (urlTestError) {
-                        console.warn('[CreateProof] ⚠️  Could not verify URL:', urlTestError);
-                    }
-                }
-                
-                // Update proof with storage URL if needed
-                if (storageUrl && registrationResult) {
-                    await client.update(proofId, { ipfs_hash: storageUrl });
-                }
-            } catch (uploadError) {
-                console.warn('[CreateProof] File upload failed, continuing without storage URL:', uploadError);
-                // Continue without file URL - we have file_hash
             }
-
-            // Step 4: AI Review (initial stage)
+            
+            // Step 4: Blockchain transaction (WAIT for confirmation before marking Step 4 complete)
             setStep(4);
+            console.log('[CreateProof] Step 4: Registering on blockchain...');
+            console.log('[CreateProof] ⏳ Waiting for blockchain confirmation (this may take a moment)...');
+            
+            // Register on blockchain - this will wait for receipt.status === 1
+            const { registerProof } = await import('@/components/utils/cryptoUtils');
+            const blockchainResult = await registerProof(fileHash, address);
+            
+            if (blockchainResult.status !== 'confirmed') {
+                throw new Error('Blockchain registration failed');
+            }
+            
+            console.log('[CreateProof] ✅ Step 4 complete: Blockchain confirmation received');
+            console.log('[CreateProof] Transaction hash:', blockchainResult.transactionId);
+            
+            // Update DB record with tx_hash
+            await client.update(proofId, { 
+                transaction_id: blockchainResult.transactionId,
+                payment_hash: blockchainResult.transactionId // Use same hash as payment
+            });
+            
+            setDone(d => ({ ...d, chain: true }));
+            
+            // All steps complete
             setCreatedProof(registrationResult);
             setStatus('success');
+            console.log('[CreateProof] ✅ All steps completed successfully!');
+            
         } catch (err) {
             console.error("[CreateProof] Registration error:", err);
             setError(err.message || t.registrationGenericError || 'An unexpected error occurred during registration.');

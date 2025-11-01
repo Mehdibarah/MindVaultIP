@@ -1,5 +1,0 @@
-# Vercel redirects file (fallback for SPA routing)
-# All routes except API go to index.html
-
-/*    /index.html   200
-

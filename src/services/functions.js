@@ -7,7 +7,11 @@
  * - Backend services
  */
 
-const notImplemented = (name: string) => {
+// ✅ JSDoc type annotation instead of TypeScript syntax
+/**
+ * @param {string} name
+ */
+const notImplemented = (name) => {
   return () => {
     console.warn(`${name} function not available - Base44 disabled`);
     return Promise.resolve({ success: false, error: 'Function not available - Base44 disabled' });

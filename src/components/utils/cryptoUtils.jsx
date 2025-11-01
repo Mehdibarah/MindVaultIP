@@ -1,5 +1,4 @@
-import { parseEther } from "viem";
-
+// ✅ Using ethers v5 (project uses ethers@5.8.0)
 // Registration fee from environment variable with fallback
 const REG_FEE = (import.meta?.env?.VITE_REG_FEE_ETH ?? "0.001").toString();
 
@@ -76,12 +75,12 @@ export async function registerOnBlockchain(hash, ownerAddress) {
     // Request account access
     await window.ethereum.request({ method: 'eth_requestAccounts' });
     
-    // Connect to Base Network
-    const provider = new ethers.BrowserProvider(window.ethereum);
+    // ✅ Connect to Base Network using ethers v5
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
     
     // Check if user is on Base network (Chain ID: 8453)
     const network = await provider.getNetwork();
-    if (network.chainId !== 8453n) {
+    if (Number(network.chainId) !== 8453) {
       try {
         // Switch to Base network
         await window.ethereum.request({
@@ -111,7 +110,8 @@ export async function registerOnBlockchain(hash, ownerAddress) {
       }
     }
     
-    const signer = await provider.getSigner();
+    // ✅ ethers v5: getSigner() (not async)
+    const signer = provider.getSigner();
     
     // MindVaultIP Smart Contract on Base Network
     const contractAddress = '0xE8F47A78Bf627A4B6fA2BC99fb59aEFf61A1c74c'; // Real deployed contract
@@ -119,59 +119,190 @@ export async function registerOnBlockchain(hash, ownerAddress) {
       "function registerProof(string memory _hash, address _owner) external payable returns (uint256)",
       "function getProof(uint256 _proofId) external view returns (string memory hash, address owner, uint256 timestamp)",
       "function proofCount() external view returns (uint256)",
+      "function fee() external view returns (uint256)", // Try to read fee from contract
+      "function registrationFee() external view returns (uint256)", // Alternative function name
+      "function regFee() external view returns (uint256)", // Alternative function name
       "event ProofRegistered(uint256 indexed proofId, string hash, address indexed owner)"
     ];
     
     const contract = new ethers.Contract(contractAddress, contractABI, signer);
     
-    // Calculate registration fee in wei - ensure value is always 0.001 ETH (contract requirement)
-    const regFeeWei = parseEther(REG_FEE);
+    // 1) Try to read fee from contract (if view function exists), otherwise use fallback
+    let regFeeWei;
+    try {
+      // Try different possible function names
+      let feeResult;
+      if (contract.fee) {
+        feeResult = await contract.fee();
+      } else if (contract.registrationFee) {
+        feeResult = await contract.registrationFee();
+      } else if (contract.regFee) {
+        feeResult = await contract.regFee();
+      } else {
+        throw new Error('No fee function found');
+      }
+      
+      // ✅ ethers v5: Contract call returns BigNumber directly
+      regFeeWei = feeResult; // Already BigNumber from contract call
+      
+      // ✅ formatEther - always convert BigNumber to string first (safe for ethers v5)
+      // This prevents any potential BigNumber constructor calls inside formatEther
+      const feeWeiString = regFeeWei.toString();
+      const feeEth = ethers.utils.formatEther(feeWeiString);
+      console.log('[TX] fee from contract:', feeEth, 'ETH');
+    } catch (feeError) {
+      // ✅ Fallback: use ethers v5 utils.parseEther (returns BigNumber)
+      regFeeWei = ethers.utils.parseEther(REG_FEE);
+      console.log('[TX] fee (fallback):', REG_FEE, 'ETH');
+    }
+    
+    // ✅ Ensure regFeeWei is BigNumber (ethers v5)
+    // Contract call returns BigNumber, parseEther also returns BigNumber
+    // Check if it's already a BigNumber by checking for _hex property (internal ethers v5 property)
+    // Only convert if it's NOT a BigNumber (shouldn't happen normally)
+    const isBigNumber = regFeeWei && typeof regFeeWei === 'object' && regFeeWei._hex !== undefined;
+    
+    if (!isBigNumber) {
+      // Not a BigNumber - convert using from() (NOT constructor - that's the error!)
+      try {
+        regFeeWei = ethers.BigNumber.from(regFeeWei ? regFeeWei.toString() : '0');
+        console.log('[TX] Converted to BigNumber using from():', regFeeWei.toString());
+      } catch (fromError) {
+        // If from() fails, use parseEther as last resort
+        console.warn('[TX] BigNumber.from() failed, using parseEther fallback:', fromError.message);
+        regFeeWei = ethers.utils.parseEther(REG_FEE);
+      }
+    } else {
+      // Already BigNumber - use as is
+      console.log('[TX] regFeeWei is already BigNumber');
+    }
+    
+    // ✅ Debug logs before sending
+    // network already fetched above for chain check, reuse it
+    const currentNetwork = await provider.getNetwork();
+    console.log('[dbg] chainId=', currentNetwork.chainId.toString()); // باید 8453 باشد (Base Mainnet)
+    
+    const contractCode = await provider.getCode(contractAddress);
+    console.log('[dbg] contract code length:', contractCode.length); // > 2 یعنی قرارداد واقعاً دیپلوی شده
+    
+    console.log('[dbg] fee(wei)=', regFeeWei.toString());
+    console.log('[dbg] args:', { hash, ownerAddress });
     
     // Check balance for gas + registration fee
     const balance = await provider.getBalance(ownerAddress);
-    const requiredBalance = ethers.parseEther(REG_FEE) + ethers.parseEther('0.0005'); // Fee + gas buffer
+    // ✅ ethers v5: utils.parseEther
+    const requiredBalance = ethers.utils.parseEther(REG_FEE).add(ethers.utils.parseEther('0.0005')); // Fee + gas buffer
     if (balance < requiredBalance) {
       throw new Error(`Insufficient ETH balance. You need at least ${REG_FEE} ETH for registration fee plus gas on Base network.`);
     }
     
-    // Register the proof on blockchain
-    // Estimate gas with the value included (important for accurate estimation)
-    const gasEstimate = await contract.registerProof.estimateGas(hash, ownerAddress, { value: regFeeWei });
+    // 2) Preflight check: callStatic (ethers v5) - simulate transaction to catch revert errors before MetaMask
+    try {
+      console.log('[TX] Preflight: callStatic - simulating transaction...');
+      // ✅ ethers v5: callStatic (not staticCall)
+      await contract.callStatic.registerProof(hash, ownerAddress, { value: regFeeWei });
+      console.log('[TX] ✅ Preflight check passed - transaction will succeed');
+    } catch (simulateError) {
+      console.error('[TX] err', simulateError.code, simulateError.reason ?? simulateError.message);
+      // Extract revert reason if available
+      const errorMessage = simulateError.reason || simulateError.message || 'Transaction simulation failed';
+      throw new Error(`Transaction will fail: ${errorMessage}. Please check contract requirements (fee amount, permissions, etc.).`);
+    }
     
-    // Call registerProof with value - let MetaMask estimate gas normally
+    // 3) Estimate gas with the value included (important for accurate estimation)
+    console.log('[TX] Estimating gas...');
+    let gasEstimate;
+    try {
+      gasEstimate = await contract.estimateGas.registerProof(hash, ownerAddress, { value: regFeeWei });
+      console.log('[fee-check] estimated gas:', gasEstimate.toString());
+    } catch (gasError) {
+      console.error('[TX] err', gasError.code, gasError.reason ?? gasError.message);
+      throw new Error(`Gas estimation failed: ${gasError.reason || gasError.message}. This usually means the transaction will revert.`);
+    }
+    
+    // Add 20% buffer to gas estimate for safety (ethers v5 BigNumber)
+    const gasLimit = gasEstimate.mul(120).div(100);
+    console.log('[TX] Gas estimate:', gasEstimate.toString(), '→ with buffer:', gasLimit.toString());
+    
+    // 4) Send transaction
+    console.log('[TX] Sending transaction...');
     const tx = await contract.registerProof(hash, ownerAddress, {
-      value: regFeeWei, // Always include 0.001 ETH registration fee (contract requirement)
-      // Let MetaMask estimate gas normally - no overrides
+      value: regFeeWei,
+      gasLimit: gasLimit,
     });
     
-    console.log('Transaction sent:', tx.hash);
+    console.log('[TX] hash', tx.hash);
+    console.log('[TX] Transaction link: https://basescan.org/tx/' + tx.hash);
     
-    // Wait for confirmation
-    const receipt = await tx.wait();
-    console.log('Transaction confirmed:', receipt);
+    // 5) Wait for confirmation - handle TRANSACTION_REPLACED
+    console.log('[TX] Waiting for confirmation (1 block)...');
+    let receipt;
+    try {
+      // ✅ ethers v5: wait(1) waits for 1 confirmation
+      receipt = await tx.wait(1);
+      
+      // ✅ CRITICAL: Only proceed if receipt.status === 1 (transaction succeeded)
+      if (!receipt || receipt.status !== 1) {
+        throw new Error('Transaction failed or was reverted on blockchain. Status: ' + (receipt?.status || 'unknown'));
+      }
+      
+      console.log('[TX] rcpt', receipt.status, receipt.transactionHash);
+      console.log('[TX] ✅ Transaction confirmed on blockchain');
+      
+    } catch (waitError) {
+      // Handle TRANSACTION_REPLACED (Speed Up/Cancel)
+      if (waitError.code === 'TRANSACTION_REPLACED') {
+        console.warn('[TX] Transaction replaced, waiting for replacement...');
+        if (waitError.cancelled) {
+          throw new Error('Transaction was cancelled (replaced by user).');
+        } else {
+          // Transaction was replaced (Speed Up) - wait for replacement
+          try {
+            const rep = waitError.replacement;
+            receipt = await rep.wait(1);
+            if (receipt.status === 1) {
+              console.log('[TX] rcpt', receipt.status, receipt.transactionHash);
+              console.log('[TX] ✅ Replacement transaction confirmed');
+            } else {
+              throw new Error('Replacement transaction failed or was reverted.');
+            }
+          } catch (repError) {
+            console.error('[TX] err', repError.code, repError.reason ?? repError.message);
+            throw new Error('Replacement transaction failed: ' + (repError.message || 'Unknown error'));
+          }
+        }
+      } else {
+        throw waitError;
+      }
+    }
     
     return {
-      transactionId: tx.hash,
-      status: receipt.status === 1 ? 'confirmed' : 'failed',
+      transactionId: receipt.transactionHash,
+      status: 'confirmed',
       network: 'Base',
       blockNumber: receipt.blockNumber,
       gasUsed: receipt.gasUsed.toString()
     };
     
   } catch (error) {
-    console.error('Blockchain registration failed:', error);
+    console.error('[TX] err', error.code, error.reason ?? error.message);
     
-    // Provide specific error messages
-    if (error.message.includes('MetaMask')) {
+    // Handle specific error types
+    if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
+      // User rejected/cancelled - return undefined (don't throw, let caller handle)
+      return;
+    } else if (error.code === 'CALL_EXCEPTION' || error.code === -32000) {
+      throw new Error('Transaction execution failed. Please check contract requirements (fee amount, permissions, etc.).');
+    } else if (error.code === 'INSUFFICIENT_FUNDS') {
+      throw new Error('Insufficient ETH balance for transaction (fee + gas).');
+    } else if (error.message.includes('MetaMask')) {
       throw new Error('MetaMask is required. Please install MetaMask extension and connect your wallet.');
     } else if (error.message.includes('Insufficient')) {
       throw new Error(error.message);
-    } else if (error.code === 4001) {
-      throw new Error('Transaction was rejected by user.');
     } else if (error.code === -32603) {
       throw new Error('Network error. Please check your internet connection and try again.');
     } else {
-      throw new Error(`Blockchain registration failed: ${error.message}`);
+      throw new Error(`Blockchain registration failed: ${error.message || 'Unknown error'}`);
     }
   }
 }
@@ -183,20 +314,24 @@ export async function checkWalletConnection() {
   }
 
   try {
-    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+    // Request account access (not just check)
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
     if (accounts.length === 0) {
       return { connected: false, error: 'No wallet connected' };
     }
 
-    const provider = new (await import('ethers')).ethers.BrowserProvider(window.ethereum);
-    const network = await provider.getNetwork();
+    // ✅ ethers v5: Web3Provider (not BrowserProvider)
+    const { ethers } = await import('ethers');
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const currentNetwork = await provider.getNetwork();
     
     return {
       connected: true,
       account: accounts[0],
-      network: network.name,
-      chainId: network.chainId.toString(),
-      isBaseNetwork: network.chainId === 8453n
+      network: currentNetwork.name,
+      chainId: currentNetwork.chainId.toString(),
+      // ✅ ethers v5: chainId is number (not bigint)
+      isBaseNetwork: Number(currentNetwork.chainId) === 8453
     };
   } catch (error) {
     return { connected: false, error: error.message };

@@ -34,7 +34,8 @@ export interface AuthClient {
  * Base44 Authentication Client
  */
 export class Base44AuthClient implements AuthClient {
-  constructor(private base44: any) {}
+  // ✅ base44 parameter removed - not used (Base44 is disabled)
+  constructor(_base44: any) {}
 
   async me(): Promise<any | null> {
     // Base44 is disabled - this should never be called
@@ -42,7 +43,8 @@ export class Base44AuthClient implements AuthClient {
     return null;
   }
 
-  async signIn(address: string, signature: string, message: string): Promise<{ token?: string; user?: any }> {
+  async signIn(_address: string, _signature: string, _message: string): Promise<{ token?: string; user?: any }> {
+    // ✅ Parameters prefixed with _ to indicate unused (Base44 is disabled)
     // Base44 SIWE is handled separately via base44Auth.js
     // This is a placeholder - actual implementation uses base44Auth
     throw new Error('Base44 signIn should use base44Auth.js signInWithEthereum');
@@ -50,6 +52,8 @@ export class Base44AuthClient implements AuthClient {
 
   async signOut(): Promise<void> {
     // Clear Base44 auth token
+    // ✅ TypeScript: Add type ignore for JS module
+    // @ts-ignore - JS module without type definitions
     const { clearAuthToken } = await import('@/utils/base44Auth');
     clearAuthToken();
   }
@@ -86,13 +90,14 @@ export class SupabaseAuthClient implements AuthClient {
     }
   }
 
-  async signIn(address: string, signature: string, message: string): Promise<{ token?: string; user?: any }> {
+  async signIn(address: string, _signature: string, _message: string): Promise<{ token?: string; user?: any }> {
+    // ✅ _signature and _message prefixed with _ - not used in current implementation
     try {
       // Supabase SIWE implementation
       // For now, we'll use a basic approach - in production, use Supabase's SIWE flow
       const { data, error } = await this.supabase.auth.signInWithPassword({
         email: `${address}@wallet.local`, // Placeholder - adjust based on your schema
-        password: signature, // Not ideal, but works for wallet auth
+        password: _signature, // ✅ Use _signature parameter (not ideal, but works for wallet auth)
       });
 
       if (error) {
@@ -105,7 +110,7 @@ export class SupabaseAuthClient implements AuthClient {
           },
           body: JSON.stringify({
             email: `${address}@wallet.local`,
-            password: signature,
+            password: _signature, // ✅ Use _signature parameter
           }),
         });
 

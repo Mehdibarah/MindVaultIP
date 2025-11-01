@@ -1,4 +1,3 @@
-import React from 'react';
 import { Globe, ExternalLink } from 'lucide-react';
 
 interface Source {

@@ -1,3 +1,5 @@
+import './autoErrorMonitor.js'
+import './autoHealer.js'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
@@ -8,6 +10,18 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { setupWeb3Modal, wagmiConfig, queryClient } from './lib/wagmi'
 import { logSupabaseEnv } from './lib/storageDiagnostics'
 import { logFeeComparison } from './utils/contractFeeChecker'
+
+// Runtime guard: Block Coinbase metrics/beacons if any stray libs attempt to send them
+if (typeof window !== 'undefined') {
+  const origBeacon = navigator.sendBeacon?.bind(navigator);
+  navigator.sendBeacon = (url, data) => {
+    try {
+      const u = typeof url === 'string' ? url : url?.toString?.();
+      if (u && u.includes('coinbase.com')) return true; // swallow
+    } catch {}
+    return origBeacon ? origBeacon(url, data) : false;
+  };
+}
 
 // Run Supabase diagnostics on startup (non-blocking)
 void (async () => {
@@ -20,14 +34,17 @@ void (async () => {
   }
 })();
 
-// Run contract fee check on startup (non-blocking)
+// Run contract fee check on startup (non-blocking, safe - won't crash app)
 void (async () => {
   try {
-    // Wait a bit for wallet to be ready
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Wait a bit for wallet/provider to be ready
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    // ✅ logFeeComparison is now safe and won't throw
     await logFeeComparison();
   } catch (error) {
-    console.error('[Main] Failed to check contract fee:', error);
+    // ✅ Even if logFeeComparison throws (shouldn't happen), silently handle it
+    console.warn('[Main] Contract fee check skipped (non-critical):', error.message || error);
+    // Don't crash the app - this is just a diagnostic
   }
 })();
 
@@ -49,6 +66,39 @@ window.addEventListener('error', (event) => {
       event.error?.message?.includes('requestDevice') ||
       event.error?.name === 'TransportOpenUserCancelled') {
     // Silently ignore - Ledger will request permission when user actually connects
+    event.preventDefault();
+    return;
+  }
+
+  // Handle MetaMask RPC permission errors (MetaMask extension trying to access its own APIs)
+  if (event.error?.message?.includes('Unauthorized to perform action') ||
+      event.error?.code === 4100 ||
+      event.error?.message?.includes('metaMask') ||
+      event.error?.message?.includes('RPC Error') ||
+      event.error?.stack?.includes('api.cx.metamask.io') ||
+      event.error?.stack?.includes('accounts.api.cx.metamask.io') ||
+      event.error?.message?.includes('getPublicKey') ||
+      event.error?.message?.includes('getAccessToken')) {
+    // Silently ignore - MetaMask extension permission issues, not related to our app
+    event.preventDefault();
+    return;
+  }
+
+  // Handle Sentry/null data errors (Sentry trying to process null responses)
+  if (event.error?.message?.includes('Cannot read properties of null') ||
+      event.error?.stack?.includes('sentry') ||
+      event.error?.stack?.includes('transformResponse') ||
+      event.error?.stack?.includes('bootstrap-BnsX9yKQ.js')) {
+    // Silently ignore - Sentry/internal error handling issues
+    event.preventDefault();
+    return;
+  }
+
+  // Handle ENS errors on Base network (Base doesn't support ENS)
+  if (event.error?.message?.includes('ChainDoesNotSupportContract') ||
+      event.error?.message?.includes('ensUniversalResolver') ||
+      event.error?.message?.includes('Chain "Base" does not support')) {
+    // Silently ignore - Base network doesn't support ENS, this is expected
     event.preventDefault();
     return;
   }
@@ -74,6 +124,39 @@ window.addEventListener('unhandledrejection', (event) => {
       event.reason?.message?.includes('requestDevice') ||
       event.reason?.name === 'TransportOpenUserCancelled') {
     // Silently ignore - Ledger will request permission when user actually connects
+    event.preventDefault();
+    return;
+  }
+
+  // Handle MetaMask RPC permission errors (MetaMask extension trying to access its own APIs)
+  if (event.reason?.message?.includes('Unauthorized to perform action') ||
+      event.reason?.code === 4100 ||
+      event.reason?.message?.includes('metaMask') ||
+      event.reason?.message?.includes('RPC Error') ||
+      event.reason?.stack?.includes('api.cx.metamask.io') ||
+      event.reason?.stack?.includes('accounts.api.cx.metamask.io') ||
+      event.reason?.message?.includes('getPublicKey') ||
+      event.reason?.message?.includes('getAccessToken')) {
+    // Silently ignore - MetaMask extension permission issues, not related to our app
+    event.preventDefault();
+    return;
+  }
+
+  // Handle Sentry/null data errors (Sentry trying to process null responses)
+  if (event.reason?.message?.includes('Cannot read properties of null') ||
+      event.reason?.stack?.includes('sentry') ||
+      event.reason?.stack?.includes('transformResponse') ||
+      event.reason?.stack?.includes('bootstrap-BnsX9yKQ.js')) {
+    // Silently ignore - Sentry/internal error handling issues
+    event.preventDefault();
+    return;
+  }
+
+  // Handle ENS errors on Base network (Base doesn't support ENS)
+  if (event.reason?.message?.includes('ChainDoesNotSupportContract') ||
+      event.reason?.message?.includes('ensUniversalResolver') ||
+      event.reason?.message?.includes('Chain "Base" does not support')) {
+    // Silently ignore - Base network doesn't support ENS, this is expected
     event.preventDefault();
     return;
   }

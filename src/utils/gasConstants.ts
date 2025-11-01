@@ -1,4 +1,5 @@
-import { parseEther } from "viem";
+// ✅ Using ethers v5 for parseEther (not viem)
+import { ethers } from 'ethers';
 
 // Registration fee from environment variable with fallback
 export const REG_FEE = (import.meta?.env?.VITE_REG_FEE_ETH ?? "0.001").toString();
@@ -37,7 +38,9 @@ export function getBaseGasParams(chainId?: number | bigint) {
   };
 }
 
-// Get registration fee in wei
+// Get registration fee in wei (returns bigint for compatibility)
 export function getRegistrationFeeWei(): bigint {
-  return parseEther(REG_FEE);
+  // ✅ ethers v5: utils.parseEther returns BigNumber, convert to bigint
+  const bn = ethers.utils.parseEther(REG_FEE);
+  return BigInt(bn.toString());
 }
