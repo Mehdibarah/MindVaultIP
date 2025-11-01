@@ -1,0 +1,2 @@
+cd /Users/Home/Downloads/mind-vault-ip-copy-copy-dcccaa8f && ls -la public/ 2>/dev/null || echo "public directory exists" && echo "" && echo "Creating __nonexistent__.txt file..."
+cd /Users/Home/Downloads/mind-vault-ip-copy-copy-dcccaa8f && mkdir -p public && echo "" > public/__nonexistent__.txt && echo "✅ Created __nonexistent__.txt file" && ls -lh public/__nonexistent__.txt
