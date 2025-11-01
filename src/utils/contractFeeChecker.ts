@@ -11,8 +11,7 @@ import { ethers } from 'ethers';
 const parseEther = (value: string): string => {
   return ethers.utils.parseEther(value).toString();
 };
-import { REGISTRATION_FEE } from '@/lib/contracts';
-import { getContractAddress } from '@/lib/contracts';
+import { REGISTRATION_FEE, getContractAddress, getContractABI } from '@/lib/contracts';
 
 /**
  * Check if contract fee matches frontend fee
@@ -42,32 +41,54 @@ export async function checkContractFee(): Promise<{
       transport: http(),
     });
 
-    // Try to read fee from contract
-    // Common function names: fee, registrationFee, regFee, REGISTRATION_FEE, getRegistrationFee
-    const possibleFunctions = [
-      'fee', // ✅ Try 'fee' first (most common in newer contracts)
-      'registrationFee',
-      'regFee',
-      'REGISTRATION_FEE',
-      'getRegistrationFee',
-    ];
+    // Try to read fee from contract using actual ABI
+    const contractABI = getContractABI('MIND_VAULT_IP_CORE');
+    
+    // Extract fee-related functions from ABI
+    const feeFunctions = contractABI
+      ?.filter((item: any) => 
+        item.type === 'function' && 
+        item.stateMutability === 'view' &&
+        item.inputs?.length === 0 &&
+        item.outputs?.length === 1 &&
+        item.outputs[0]?.type === 'uint256' &&
+        (item.name?.toLowerCase().includes('fee') || 
+         item.name?.toLowerCase().includes('registration'))
+      )
+      ?.map((item: any) => item.name) || [];
+
+    // Fallback to common function names if ABI doesn't have fee functions
+    const possibleFunctions = feeFunctions.length > 0 
+      ? feeFunctions 
+      : [
+          'fee',
+          'registrationFee',
+          'regFee',
+          'REGISTRATION_FEE',
+          'getRegistrationFee',
+        ];
 
     let contractFeeWei: bigint | null = null;
     let functionName: string | null = null;
 
     for (const funcName of possibleFunctions) {
       try {
+        // Use actual ABI if available, otherwise use generic ABI
+        const abiToUse = contractABI && feeFunctions.includes(funcName)
+          ? contractABI.filter((item: any) => item.name === funcName)
+          : [
+              {
+                name: funcName,
+                type: 'function',
+                stateMutability: 'view',
+                inputs: [],
+                outputs: [{ type: 'uint256' }],
+              },
+            ];
+
         const result = await publicClient.readContract({
           address: contractAddress as `0x${string}`,
-          abi: [
-            {
-              name: funcName,
-              type: 'function',
-              stateMutability: 'view',
-              inputs: [],
-              outputs: [{ type: 'uint256' }],
-            },
-          ],
+          abi: abiToUse as any,
           functionName: funcName,
         });
 
@@ -122,29 +143,46 @@ export async function checkContractFee(): Promise<{
  */
 export async function logFeeComparison(): Promise<void> {
   try {
-    console.log('[ContractFeeChecker] 🔍 Checking fee match...');
+    const isDebug = localStorage.getItem('debug') === '1';
+    
+    if (isDebug) {
+      console.log('[ContractFeeChecker] 🔍 Checking fee match...');
+    }
     
     const result = await checkContractFee();
 
     if (result.error) {
       // If contract doesn't have a public fee function, that's OK - UI uses fixed 0.001 ETH
       if (result.error.includes('Could not read fee')) {
-        console.log('[ContractFeeChecker] ⚠️  Contract fee not readable (no public function)');
-        console.log('[ContractFeeChecker]   Using fixed frontend fee:', result.frontendFee, 'ETH');
-        console.log('[ContractFeeChecker]   This is normal if contract fee is immutable/hardcoded');
+        // ✅ Silent - this is expected behavior, no need to warn users
+        // Contract fee is likely hardcoded/immutable in the contract
+        // Frontend will use the fixed fee (0.001 ETH) which should match contract expectations
+        if (isDebug) {
+          console.debug('[ContractFeeChecker] ℹ️  Contract fee not readable (no public function)');
+          console.debug('[ContractFeeChecker]   Using fixed frontend fee:', result.frontendFee, 'ETH');
+          console.debug('[ContractFeeChecker]   This is normal if contract fee is immutable/hardcoded');
+        }
         return; // ✅ Early return - this is expected, not an error
       } else {
-        console.warn('[ContractFeeChecker] ⚠️', result.error);
+        // Only log other errors in debug mode
+        if (isDebug) {
+          console.debug('[ContractFeeChecker]', result.error);
+        }
         return; // ✅ Return on error to prevent crash
       }
     }
 
-    console.log('[ContractFeeChecker] 📊 Contract Fee:', result.contractFee, 'ETH');
-    console.log('[ContractFeeChecker] 📤 Frontend Fee:', result.frontendFee, 'ETH');
+    if (isDebug) {
+      console.log('[ContractFeeChecker] 📊 Contract Fee:', result.contractFee, 'ETH');
+      console.log('[ContractFeeChecker] 📤 Frontend Fee:', result.frontendFee, 'ETH');
+    }
 
     if (result.match) {
-      console.log('[ContractFeeChecker] ✅ Fees match!');
+      if (isDebug) {
+        console.log('[ContractFeeChecker] ✅ Fees match!');
+      }
     } else {
+      // Only warn if fees don't match (this is actually important)
       console.warn('[ContractFeeChecker] ⚠️  FEES DO NOT MATCH!');
       console.warn('[ContractFeeChecker]   Contract expects:', result.contractFee, 'ETH');
       console.warn('[ContractFeeChecker]   Frontend sends:', result.frontendFee, 'ETH');

@@ -83,28 +83,47 @@ export class SupabaseProofClient implements ProofClient {
   constructor(private supabase: any) {}
 
   async create(data: Partial<Proof>): Promise<Proof> {
+    // Build insert data object, including id if provided
+    const insertData: any = {
+      title: data.title,
+      category: data.category,
+      description: data.description,
+      file_hash: data.file_hash,
+      file_name: data.file_name,
+      file_size: data.file_size,
+      file_type: data.file_type,
+      ipfs_hash: data.ipfs_hash,
+      is_public: data.is_public ?? true,
+      payment_hash: data.payment_hash,
+      created_by: data.created_by,
+    };
+    
+    // Include id if provided (for idempotency)
+    if (data.id) {
+      insertData.id = data.id;
+    }
+    
+    // Include transaction_id if provided
+    if (data.transaction_id) {
+      insertData.transaction_id = data.transaction_id;
+    }
+    
     const { data: result, error } = await this.supabase
       .from('proofs')
-      .insert({
-        title: data.title,
-        category: data.category,
-        description: data.description,
-        file_hash: data.file_hash,
-        file_name: data.file_name,
-        file_size: data.file_size,
-        file_type: data.file_type,
-        ipfs_hash: data.ipfs_hash,
-        is_public: data.is_public ?? true,
-        payment_hash: data.payment_hash,
-        created_by: data.created_by,
-      })
+      .insert(insertData)
       .select()
       .single();
 
     if (error) {
+      console.error('[SupabaseProofClient] create() error:', error);
       throw new Error(`Failed to create proof: ${error.message}`);
     }
 
+    if (!result) {
+      throw new Error('Failed to create proof: No data returned');
+    }
+
+    console.log('[SupabaseProofClient] ✅ Proof created successfully:', result.id);
     return result;
   }
 

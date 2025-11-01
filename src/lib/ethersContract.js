@@ -2,8 +2,30 @@ import { ethers } from 'ethers';
 import mindVaultIPCoreABI from './mindvaultipcoreABI.json';
 
 // Contract configuration
-const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '0x1234567890123456789012345678901234567890';
-const PAYMENT_ADDRESS = import.meta.env.VITE_PAYMENT_ADDRESS || '0x63A8000bD167183AA43629d7C315d0FCc14B95ea';
+// ✅ Use checksum addresses for MetaMask verification
+
+const rawContractAddress = import.meta.env.VITE_CONTRACT_ADDRESS || '0x1234567890123456789012345678901234567890';
+const rawPaymentAddress = import.meta.env.VITE_PAYMENT_ADDRESS || '0x63A8000bD167183AA43629d7C315d0FCc14B95ea';
+
+// Convert to checksum format (required for MetaMask verification)
+// ✅ Validate address format before checksumming (must be 42 characters: 0x + 40 hex digits)
+const isValidAddress = (addr) => {
+  return addr && 
+         typeof addr === 'string' && 
+         addr.startsWith('0x') && 
+         addr.length === 42 && 
+         /^0x[a-fA-F0-9]{40}$/.test(addr);
+};
+
+const CONTRACT_ADDRESS = rawContractAddress && 
+                         rawContractAddress !== '0x1234567890123456789012345678901234567890' &&
+                         isValidAddress(rawContractAddress)
+  ? ethers.utils.getAddress(rawContractAddress) 
+  : rawContractAddress;
+  
+const PAYMENT_ADDRESS = rawPaymentAddress && isValidAddress(rawPaymentAddress)
+  ? ethers.utils.getAddress(rawPaymentAddress) 
+  : rawPaymentAddress;
 const RPC_URL = import.meta.env.VITE_RPC_URL || 'https://base-mainnet.g.alchemy.com/v2/demo';
 const BASE_CHAIN_ID = 8453; // Base mainnet
 const BASE_RPC_URL = 'https://mainnet.base.org';

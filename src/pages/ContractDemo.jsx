@@ -51,7 +51,7 @@ export default function ContractDemo() {
               <div>
                 <span className="text-gray-400 text-sm">MindVaultIP Core Contract</span>
                 <p className="text-white font-mono text-sm break-all">
-                  {import.meta.env.VITE_CONTRACT_ADDRESS || '0xB4be9e66c80fcbe317C5038baDca1'}
+                  {import.meta.env.VITE_CONTRACT_ADDRESS || 'Not configured'}
                 </p>
               </div>
               <div>

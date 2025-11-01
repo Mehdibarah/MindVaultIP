@@ -19,12 +19,32 @@ if (supabaseUrl && supabaseKey) {
 }
 
 export default async function handler(req, res) {
-  // ✅ CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // ✅ CORS headers - MUST be set before any response
+  const origin = req.headers.origin || req.headers.host;
+  const allowedOrigins = [
+    'https://www.mindvaultip.com',
+    'https://mindvaultip.com',
+    'http://localhost:5173',
+    'http://localhost:3000'
+  ];
+  
+  const isAllowed = !origin || allowedOrigins.some(allowed => 
+    origin.includes('mindvaultip.com') || 
+    origin.includes('localhost')
+  );
+  
+  if (isAllowed) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Max-Age', '86400');
 
-  // Handle preflight
+  // ✅ Handle preflight IMMEDIATELY (no redirects allowed)
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }

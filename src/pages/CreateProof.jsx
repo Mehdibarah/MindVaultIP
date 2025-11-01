@@ -278,18 +278,37 @@ export default function CreateProof() {
             // Use upsert for idempotency (if same proofId exists, update it)
             let registrationResult;
             try {
+                console.log('[CreateProof] 📝 Attempting to create proof with data:', JSON.stringify(proofData, null, 2));
                 registrationResult = await client.create(proofData);
+                console.log('[CreateProof] 📥 Create response:', registrationResult);
+                
                 if (!registrationResult || !registrationResult.id) {
-                    throw new Error('Failed to create proof record');
+                    console.error('[CreateProof] ❌ Invalid response from create:', registrationResult);
+                    throw new Error('Failed to create proof record: Invalid response');
                 }
-                console.log('[CreateProof] ✅ Step 3 complete: Database record created');
+                console.log('[CreateProof] ✅ Step 3 complete: Database record created with ID:', registrationResult.id);
                 setDone(d => ({ ...d, db: true }));
             } catch (dbError) {
+                console.error('[CreateProof] ❌ Database error:', dbError);
+                console.error('[CreateProof] Error details:', {
+                    message: dbError.message,
+                    stack: dbError.stack,
+                    name: dbError.name
+                });
+                
                 // If record already exists (idempotency), try to update it
-                if (dbError.message?.includes('duplicate') || dbError.message?.includes('already exists')) {
-                    console.log('[CreateProof] Record already exists, updating...');
-                    registrationResult = await client.update(proofId, proofData);
-                    setDone(d => ({ ...d, db: true }));
+                if (dbError.message?.includes('duplicate') || 
+                    dbError.message?.includes('already exists') ||
+                    dbError.message?.includes('23505')) {
+                    console.log('[CreateProof] Record already exists (idempotency), updating...');
+                    try {
+                        registrationResult = await client.update(proofId, proofData);
+                        console.log('[CreateProof] ✅ Record updated successfully:', registrationResult.id);
+                        setDone(d => ({ ...d, db: true }));
+                    } catch (updateError) {
+                        console.error('[CreateProof] ❌ Update also failed:', updateError);
+                        throw new Error(`Failed to update proof: ${updateError.message}`);
+                    }
                 } else {
                     throw dbError;
                 }

@@ -114,7 +114,24 @@ export async function registerOnBlockchain(hash, ownerAddress) {
     const signer = provider.getSigner();
     
     // MindVaultIP Smart Contract on Base Network
-    const contractAddress = '0xE8F47A78Bf627A4B6fA2BC99fb59aEFf61A1c74c'; // Real deployed contract
+    // ✅ Use checksum address format for MetaMask verification
+    const rawContractAddress = import.meta.env.VITE_CONTRACT_ADDRESS || '0xE8F47A78Bf627A4B6fA2BC99fb59aEFf61A1c74c';
+    
+    // Validate address format before checksumming (must be 42 characters: 0x + 40 hex digits)
+    const isValidAddress = (addr) => {
+      return addr && 
+             typeof addr === 'string' && 
+             addr.startsWith('0x') && 
+             addr.length === 42 && 
+             /^0x[a-fA-F0-9]{40}$/.test(addr);
+    };
+    
+    if (!isValidAddress(rawContractAddress)) {
+      throw new Error(`Invalid contract address format: "${rawContractAddress}". Address must be 42 characters (0x + 40 hex digits).`);
+    }
+    
+    const contractAddress = ethers.utils.getAddress(rawContractAddress); // Convert to checksum format
+    
     const contractABI = [
       "function registerProof(string memory _hash, address _owner) external payable returns (uint256)",
       "function getProof(uint256 _proofId) external view returns (string memory hash, address owner, uint256 timestamp)",
@@ -182,7 +199,15 @@ export async function registerOnBlockchain(hash, ownerAddress) {
     const currentNetwork = await provider.getNetwork();
     console.log('[dbg] chainId=', currentNetwork.chainId.toString()); // باید 8453 باشد (Base Mainnet)
     
+    // ✅ Verify contract exists on network (MetaMask requires this for verification)
     const contractCode = await provider.getCode(contractAddress);
+    const contractExists = contractCode && contractCode !== '0x' && contractCode.length > 2;
+    
+    if (!contractExists) {
+      throw new Error(`Contract not found at address ${contractAddress} on Base network. Please verify the contract address is correct and deployed on Base mainnet (Chain ID: 8453).`);
+    }
+    
+    console.log('[dbg] ✅ Contract verified at:', contractAddress);
     console.log('[dbg] contract code length:', contractCode.length); // > 2 یعنی قرارداد واقعاً دیپلوی شده
     
     console.log('[dbg] fee(wei)=', regFeeWei.toString());

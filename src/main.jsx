@@ -17,7 +17,8 @@ import './autoHealer.js'
         message.includes('getPublicKey') ||
         message.includes('getAccessToken') ||
         message.includes('Error fetching access token') ||
-        message.includes('MetaMask - RPC Error')) {
+        message.includes('MetaMask - RPC Error') ||
+        (message.includes('Failed to load resource') && (message.includes('metamask.io') || message.includes('accounts.api.cx.metamask.io')))) {
       return; // Silently ignore
     }
     
@@ -25,14 +26,24 @@ import './autoHealer.js'
     if (message.includes('Cannot read properties of null') ||
         message.includes('transformResponse') ||
         message.includes('bootstrap-BnsX9yKQ.js') ||
-        message.includes('sentry')) {
+        message.includes('sentry') ||
+        message.includes('Sentry')) {
       return; // Silently ignore
     }
     
     // Filter ENS errors
     if (message.includes('ChainDoesNotSupportContract') ||
         message.includes('ensUniversalResolver') ||
-        message.includes('Chain "Base" does not support')) {
+        message.includes('Chain "Base" does not support') ||
+        message.includes('Error fetching ENS name')) {
+      return; // Silently ignore
+    }
+    
+    // Filter network errors from MetaMask/Sentry APIs (404, 403, etc.)
+    if (message.includes('Failed to load resource') && 
+        (message.includes('metamask.io') || 
+         message.includes('accounts.api.cx.metamask.io') ||
+         message.includes('sentry'))) {
       return; // Silently ignore
     }
     
@@ -47,13 +58,26 @@ import './autoHealer.js'
     if (message.includes('Unauthorized to perform action') ||
         message.includes('MetaMask - RPC Error') ||
         message.includes('api.cx.metamask.io') ||
-        message.includes('accounts.api.cx.metamask.io')) {
+        message.includes('accounts.api.cx.metamask.io') ||
+        message.includes('getPublicKey') ||
+        message.includes('getAccessToken') ||
+        message.includes('Error fetching access token') ||
+        (message.includes('Failed to load resource') && (message.includes('metamask.io') || message.includes('accounts.api.cx.metamask.io')))) {
+      return; // Silently ignore
+    }
+    
+    // Filter Sentry warnings
+    if (message.includes('Cannot read properties of null') ||
+        message.includes('transformResponse') ||
+        message.includes('bootstrap-BnsX9yKQ.js') ||
+        message.includes('sentry')) {
       return; // Silently ignore
     }
     
     // Filter ENS warnings
     if (message.includes('ChainDoesNotSupportContract') ||
-        message.includes('ensUniversalResolver')) {
+        message.includes('ensUniversalResolver') ||
+        message.includes('Error fetching ENS name')) {
       return; // Silently ignore
     }
     
@@ -170,8 +194,19 @@ window.addEventListener('error', (event) => {
   // Handle ENS errors on Base network (Base doesn't support ENS)
   if (event.error?.message?.includes('ChainDoesNotSupportContract') ||
       event.error?.message?.includes('ensUniversalResolver') ||
-      event.error?.message?.includes('Chain "Base" does not support')) {
+      event.error?.message?.includes('Chain "Base" does not support') ||
+      event.error?.message?.includes('Error fetching ENS name')) {
     // Silently ignore - Base network doesn't support ENS, this is expected
+    event.preventDefault();
+    return;
+  }
+  
+  // Handle network errors from MetaMask/Sentry APIs
+  if (event.message?.includes('Failed to load resource') && 
+      (event.message?.includes('metamask.io') || 
+       event.message?.includes('accounts.api.cx.metamask.io') ||
+       event.message?.includes('sentry'))) {
+    // Silently ignore - MetaMask/Sentry API network errors (404, 403, etc.)
     event.preventDefault();
     return;
   }
@@ -239,8 +274,19 @@ window.addEventListener('unhandledrejection', (event) => {
   // Handle ENS errors on Base network (Base doesn't support ENS)
   if (event.reason?.message?.includes('ChainDoesNotSupportContract') ||
       event.reason?.message?.includes('ensUniversalResolver') ||
-      event.reason?.message?.includes('Chain "Base" does not support')) {
+      event.reason?.message?.includes('Chain "Base" does not support') ||
+      event.reason?.message?.includes('Error fetching ENS name')) {
     // Silently ignore - Base network doesn't support ENS, this is expected
+    event.preventDefault();
+    return;
+  }
+  
+  // Handle network errors from MetaMask/Sentry APIs
+  if (event.reason?.message?.includes('Failed to load resource') && 
+      (event.reason?.message?.includes('metamask.io') || 
+       event.reason?.message?.includes('accounts.api.cx.metamask.io') ||
+       event.reason?.message?.includes('sentry'))) {
+    // Silently ignore - MetaMask/Sentry API network errors (404, 403, etc.)
     event.preventDefault();
     return;
   }
