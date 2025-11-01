@@ -1,5 +1,67 @@
 import './autoErrorMonitor.js'
 import './autoHealer.js'
+
+// ✅ Filter console errors/warnings BEFORE React loads (to catch MetaMask/Sentry errors early)
+(() => {
+  const originalError = console.error;
+  const originalWarn = console.warn;
+  
+  console.error = function(...args) {
+    const message = args.join(' ');
+    
+    // Filter MetaMask errors
+    if (message.includes('Unauthorized to perform action') ||
+        message.includes('code: 4100') ||
+        message.includes('api.cx.metamask.io') ||
+        message.includes('accounts.api.cx.metamask.io') ||
+        message.includes('getPublicKey') ||
+        message.includes('getAccessToken') ||
+        message.includes('Error fetching access token') ||
+        message.includes('MetaMask - RPC Error')) {
+      return; // Silently ignore
+    }
+    
+    // Filter Sentry errors
+    if (message.includes('Cannot read properties of null') ||
+        message.includes('transformResponse') ||
+        message.includes('bootstrap-BnsX9yKQ.js') ||
+        message.includes('sentry')) {
+      return; // Silently ignore
+    }
+    
+    // Filter ENS errors
+    if (message.includes('ChainDoesNotSupportContract') ||
+        message.includes('ensUniversalResolver') ||
+        message.includes('Chain "Base" does not support')) {
+      return; // Silently ignore
+    }
+    
+    // Call original for other errors
+    originalError.apply(console, args);
+  };
+  
+  console.warn = function(...args) {
+    const message = args.join(' ');
+    
+    // Filter MetaMask warnings
+    if (message.includes('Unauthorized to perform action') ||
+        message.includes('MetaMask - RPC Error') ||
+        message.includes('api.cx.metamask.io') ||
+        message.includes('accounts.api.cx.metamask.io')) {
+      return; // Silently ignore
+    }
+    
+    // Filter ENS warnings
+    if (message.includes('ChainDoesNotSupportContract') ||
+        message.includes('ensUniversalResolver')) {
+      return; // Silently ignore
+    }
+    
+    // Call original for other warnings
+    originalWarn.apply(console, args);
+  };
+})();
+
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
@@ -50,7 +112,18 @@ void (async () => {
 
 // Global error handler to catch unhandled errors
 window.addEventListener('error', (event) => {
-  console.warn('Global error caught:', event.error);
+  // Only log if it's not a filtered error
+  const shouldLog = !event.error?.message?.includes('Unauthorized to perform action') &&
+                    event.error?.code !== 4100 &&
+                    !event.error?.stack?.includes('api.cx.metamask.io') &&
+                    !event.error?.stack?.includes('accounts.api.cx.metamask.io') &&
+                    !event.error?.message?.includes('ChainDoesNotSupportContract') &&
+                    !event.error?.stack?.includes('sentry') &&
+                    !event.error?.stack?.includes('bootstrap-BnsX9yKQ.js');
+  
+  if (shouldLog) {
+    console.warn('Global error caught:', event.error);
+  }
   
   // Handle specific error types
   if (event.error?.message?.includes('Cross-Origin-Opener-Policy') || 
@@ -108,7 +181,18 @@ window.addEventListener('error', (event) => {
 });
 
 window.addEventListener('unhandledrejection', (event) => {
-  console.warn('Unhandled promise rejection:', event.reason);
+  // Only log if it's not a filtered error
+  const shouldLog = !event.reason?.message?.includes('Unauthorized to perform action') &&
+                    event.reason?.code !== 4100 &&
+                    !event.reason?.stack?.includes('api.cx.metamask.io') &&
+                    !event.reason?.stack?.includes('accounts.api.cx.metamask.io') &&
+                    !event.reason?.message?.includes('ChainDoesNotSupportContract') &&
+                    !event.reason?.stack?.includes('sentry') &&
+                    !event.reason?.stack?.includes('bootstrap-BnsX9yKQ.js');
+  
+  if (shouldLog) {
+    console.warn('Unhandled promise rejection:', event.reason);
+  }
   
   // Handle specific rejection types
   if (event.reason?.message?.includes('Cross-Origin-Opener-Policy') || 
