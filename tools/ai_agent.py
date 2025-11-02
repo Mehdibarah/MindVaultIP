@@ -1,13 +1,10 @@
 import os, subprocess, tempfile
 from github import Github
 from git import Repo
-from openai import OpenAI
+from deepseek import DeepSeek
 
 key = os.getenv("DEEPSEEK_API_KEY")
-if key:
-    client = OpenAI(api_key=key, base_url="https://api.deepseek.com")
-else:
-    print("⚠️ No DEEPSEEK_API_KEY – OFFLINE mode."); client = None
+client = DeepSeek(api_key=key)
 
 BASE_BRANCH = os.environ.get("BASE_BRANCH", "main")
 BRANCH_PREFIX = "ai-fix/"
@@ -30,9 +27,11 @@ def gather():
   return out
 
 def ask_llm(ctx):
-    if not client: return "Offline mode summary\nNo changes (AI disabled)."
-    resp = client.responses.create(model="deepseek-chat", input=f"{ctx}")
-    return getattr(resp, "output_text", resp.output[0].content[0].text)
+    resp = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[{"role": "user", "content": f"{ctx}"}]
+    )
+    return resp.choices[0].message.content
 
 def apply_and_pr(diff_with_summary):
   lines = diff_with_summary.splitlines()
