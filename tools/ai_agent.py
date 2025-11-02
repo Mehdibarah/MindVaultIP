@@ -24,6 +24,8 @@ def gather():
   return out
 
 def ask_llm(ctx):
+  if not os.getenv("OPENAI_API_KEY"):
+      return "Offline mode summary\nNo changes (AI disabled)."
   system = "You are a senior full-stack engineer. Generate a minimal, safe unified diff to fix issues."
   user = f"""
 Context (test/logs/listings):
@@ -90,7 +92,9 @@ def apply_and_pr(diff_with_summary):
   print("PR:", pr.html_url)
 
 def main():
-  assert os.getenv("OPENAI_API_KEY"), "OPENAI_API_KEY missing"
+  if not os.getenv("OPENAI_API_KEY"):
+    print("⚠️  No OPENAI_API_KEY found – running OFFLINE mode.")
+    # ما فعلاً بدون API فقط لاگ جمع می‌کنیم و PR واقعی نمی‌زنیم
   assert os.getenv("GITHUB_TOKEN"), "GITHUB_TOKEN missing"
   ctx = gather()
   content = ask_llm(ctx)
