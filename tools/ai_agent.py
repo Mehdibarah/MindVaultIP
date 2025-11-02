@@ -1,7 +1,7 @@
 import os, subprocess, tempfile
 from github import Github
 from git import Repo
-import openai
+from openai import OpenAI
 
 BASE_BRANCH = os.environ.get("BASE_BRANCH", "main")
 BRANCH_PREFIX = "ai-fix/"
@@ -42,12 +42,31 @@ Return:
 - First line a short summary.
 - Then ONLY a unified diff (diff --git ...) that can be applied with 'git apply'.
 """
-  resp = openai.ChatCompletion.create(
+
+  client = OpenAI()
+
+  # SDK v1: Responses API
+  try:
+    resp = client.responses.create(
       model="gpt-4o-mini",
-      messages=[{"role":"system","content":system},
-                {"role":"user","content":user}],
-      temperature=0.2, max_tokens=1400)
-  return resp["choices"][0]["message"]["content"]
+      input=f"{system}\n\n{user}"
+    )
+    try:
+      return resp.output[0].content[0].text
+    except Exception:
+      return getattr(resp, "output_text", str(resp))
+  except Exception as e:
+    print(f"Warning: responses API failed ({e}), falling back to chat.completions")
+    comp = client.chat.completions.create(
+      model="gpt-4o-mini",
+      messages=[
+        {"role": "system", "content": system},
+        {"role": "user", "content": user}
+      ],
+      temperature=0.2,
+      max_tokens=1400
+    )
+    return comp.choices[0].message.content
 
 def apply_and_pr(diff_with_summary):
   lines = diff_with_summary.splitlines()
