@@ -31,6 +31,10 @@ def gather_context():
 
     # ساختار فولدر
     out["src_structure"] = sh("ls -R || true").stdout
+
+    for f in ["src/api","pages/api","src/components","src/hooks","src/lib","scripts"]:
+        if os.path.exists(f): out[f]=sh(f"ls -R {f} || true").stdout
+
     return out
 
 
@@ -45,15 +49,13 @@ def ask_model(context_text):
     client = Deepseek(api_key=key)
 
     prompt = """
-Fix Create Proof submission flow on Base Mainnet.
-Goals:
-1) After wallet signs and sends transaction, extract the txHash.
-2) Wait for receipt (confirm mined) on Base Mainnet (chainId 8453).
-3) Call POST /api/createproof { wallet, txHash, payload }.
-4) Insert into Supabase using service role key.
-5) Return ONLY unified diff (diff --git ...) minimal and safe.
-Do NOT modify unrelated files.
-Project context:
+Fix Create Proof on Base Mainnet:
+- get txHash after wallet
+- simulate then write
+- verify receipt (8453)
+- POST /api/createproof {wallet, txHash, payload}
+- insert into Supabase (service role)
+- minimal unified diff only
 """ + str(context_text)
 
     resp = client.chat.completions.create(
