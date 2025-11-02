@@ -44,17 +44,12 @@ def ask_model(context_text):
 
     client = Deepseek(api_key=key)
 
-    prompt = f"""
-You are an expert full-stack engineer. Analyze this project context and generate
-a single small unified git patch (diff) that fixes real issues without touching unrelated code.
-
-Context:
-{context_text}
-
-Output format:
-- First line: short summary (max 1 sentence)
-- Then only unified diff patch (diff --git ...)
-"""
+    prompt = """
+Fix the 404 GET /__nonexistent__.txt:
+- Either remove the fetch (dev-only guard) OR add public/__nonexistent__.txt.
+- Keep code minimal; return a unified diff to apply.
+Project context:
+""" + str(context_text)
 
     resp = client.chat.completions.create(
         model="deepseek-chat",
