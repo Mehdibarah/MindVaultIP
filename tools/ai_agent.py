@@ -3,6 +3,12 @@ from github import Github
 from git import Repo
 from openai import OpenAI
 
+key = os.getenv("DEEPSEEK_API_KEY")
+if key:
+    client = OpenAI(api_key=key, base_url="https://api.deepseek.com")
+else:
+    print("⚠️ No DEEPSEEK_API_KEY – OFFLINE mode."); client = None
+
 BASE_BRANCH = os.environ.get("BASE_BRANCH", "main")
 BRANCH_PREFIX = "ai-fix/"
 
@@ -24,51 +30,9 @@ def gather():
   return out
 
 def ask_llm(ctx):
-  if not os.getenv("OPENAI_API_KEY"):
-      return "Offline mode summary\nNo changes (AI disabled)."
-  system = "You are a senior full-stack engineer. Generate a minimal, safe unified diff to fix issues."
-  user = f"""
-Context (test/logs/listings):
-{ctx}
-
-Goals:
-1) حذف 404 مربوط به '__nonexistent__.txt' (یا ایجاد فایل در public/ یا شرطی کردن در dev).
-2) اگر فریم‌ورک Next/Vite است، هر فراخوانی endpoint را به مسیر درست '/api/<name>' یا URL مطلق اصلاح کن؛ از ارسال درخواست به mainnet.base.org جلوگیری کن.
-3) اگر api route وجود ندارد، برای Next.js بساز:
-   - app/api/<name>/route.ts با تابع POST
-   - یا pages/api/<name>.ts
-4) در صورت استفاده از Supabase، از supabase.functions.invoke('<function>') استفاده کن.
-5) تست‌های npm را تا جایی که می‌شود سبز کن (بدون تغییرات خطرناک).
-
-Return:
-- First line a short summary.
-- Then ONLY a unified diff (diff --git ...) that can be applied with 'git apply'.
-"""
-
-  client = OpenAI()
-
-  # SDK v1: Responses API
-  try:
-    resp = client.responses.create(
-      model="gpt-4o-mini",
-      input=f"{system}\n\n{user}"
-    )
-    try:
-      return resp.output[0].content[0].text
-    except Exception:
-      return getattr(resp, "output_text", str(resp))
-  except Exception as e:
-    print(f"Warning: responses API failed ({e}), falling back to chat.completions")
-    comp = client.chat.completions.create(
-      model="gpt-4o-mini",
-      messages=[
-        {"role": "system", "content": system},
-        {"role": "user", "content": user}
-      ],
-      temperature=0.2,
-      max_tokens=1400
-    )
-    return comp.choices[0].message.content
+    if not client: return "Offline mode summary\nNo changes (AI disabled)."
+    resp = client.responses.create(model="deepseek-chat", input=f"{ctx}")
+    return getattr(resp, "output_text", resp.output[0].content[0].text)
 
 def apply_and_pr(diff_with_summary):
   lines = diff_with_summary.splitlines()
@@ -92,9 +56,6 @@ def apply_and_pr(diff_with_summary):
   print("PR:", pr.html_url)
 
 def main():
-  if not os.getenv("OPENAI_API_KEY"):
-    print("⚠️  No OPENAI_API_KEY found – running OFFLINE mode.")
-    # ما فعلاً بدون API فقط لاگ جمع می‌کنیم و PR واقعی نمی‌زنیم
   assert os.getenv("GITHUB_TOKEN"), "GITHUB_TOKEN missing"
   ctx = gather()
   content = ask_llm(ctx)
