@@ -48,15 +48,53 @@ def ask_model(context_text):
 
     client = Deepseek(api_key=key)
 
-    prompt = """
-Fix Create Proof on Base Mainnet:
-- get txHash after wallet
-- simulate then write
-- verify receipt (8453)
-- POST /api/createproof {wallet, txHash, payload}
-- insert into Supabase (service role)
-- minimal unified diff only
-""" + str(context_text)
+    GOAL = """
+Fix failing payment on Base mainnet that causes MetaMask to show
+'likely to fail' / 'transaction was canceled'. Patch frontend to
+simulate first, only then send; verify chainId=8453; and handle receipt.
+
+Scope:
+- Find ETH payment code (e.g. useETHPayment, PaymentButton, wallet send).
+- Replace direct write/send with viem simulate+write pattern.
+- Ensure correct network (Base mainnet 8453) and target contract.
+- If contract call: use proper ABI and args; if pure transfer: use sendTransaction.
+- Pass value with parseEther(), not raw floats.
+- Add gas estimation via publicClient.estimate* or simulateContract.
+- On revert in simulation: show UI error and DO NOT open MetaMask.
+- After write, waitForTransactionReceipt() and return txHash to /api/createproof1.
+
+Concrete changes:
+
+1) Add utils/viem.ts
+   - export publicClient (ALCHEMY_BASE_RPC), walletClient, chain=base.
+
+2) Update payment code (look for 'PaymentButton' or 'useETHPayment'):
+   - if calling a contract:
+       const sim = await publicClient.simulateContract({ address, abi, functionName, args, value, account });
+       const hash = await walletClient.writeContract(sim.request);
+     else (simple transfer):
+       const hash = await walletClient.sendTransaction({ account, to: TARGET_ADDRESS, value, chain: base });
+   - await publicClient.waitForTransactionReceipt({ hash });
+   - call fetch('/api/createproof1', { method:'POST', body: JSON.stringify({ transactionHash: hash, userAddress, amount }) })
+
+3) Enforce Base:
+   - If window.ethereum chainId !== 0x2105, prompt switch; block otherwise.
+
+4) Env:
+   - read ALCHEMY_BASE_RPC from process.env (required). If missing, show UI error.
+
+5) Logs/UI:
+   - 'simulate ok', 'write sent: <hash>', 'receipt status: success/failed', and proper user-facing error.
+
+6) Tests:
+   - In dev, clicking 'Create Proof' must:
+     a) NOT open MetaMask if simulation fails (show message containing 'Simulation failed').
+     b) On success, POST /api/createproof1 returns 200 and Supabase gets a row.
+
+Return ONLY a unified diff (git apply compatible). No prose.
+"""
+
+    prompt = GOAL + "\n\nProject context:\n" + str(context_text)
 
     resp = client.chat.completions.create(
         model="deepseek-chat",
