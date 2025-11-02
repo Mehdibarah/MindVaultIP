@@ -45,9 +45,14 @@ def ask_model(context_text):
     client = Deepseek(api_key=key)
 
     prompt = """
-Fix the 404 GET /__nonexistent__.txt:
-- Either remove the fetch (dev-only guard) OR add public/__nonexistent__.txt.
-- Keep code minimal; return a unified diff to apply.
+Fix Create Proof submission flow on Base Mainnet.
+Goals:
+1) After wallet signs and sends transaction, extract the txHash.
+2) Wait for receipt (confirm mined) on Base Mainnet (chainId 8453).
+3) Call POST /api/createproof { wallet, txHash, payload }.
+4) Insert into Supabase using service role key.
+5) Return ONLY unified diff (diff --git ...) minimal and safe.
+Do NOT modify unrelated files.
 Project context:
 """ + str(context_text)
 
