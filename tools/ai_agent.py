@@ -31,6 +31,10 @@ def gather_context():
 
     # ساختار فولدر
     out["src_structure"] = sh("ls -R || true").stdout
+
+    for f in ["src/api","pages/api","src/components","src/hooks","src/lib","scripts"]:
+        if os.path.exists(f): out[f]=sh(f"ls -R {f} || true").stdout
+
     return out
 
 
@@ -44,17 +48,15 @@ def ask_model(context_text):
 
     client = Deepseek(api_key=key)
 
-    prompt = f"""
-You are an expert full-stack engineer. Analyze this project context and generate
-a single small unified git patch (diff) that fixes real issues without touching unrelated code.
-
-Context:
-{context_text}
-
-Output format:
-- First line: short summary (max 1 sentence)
-- Then only unified diff patch (diff --git ...)
-"""
+    prompt = """
+Fix Create Proof on Base Mainnet:
+- get txHash after wallet
+- simulate then write
+- verify receipt (8453)
+- POST /api/createproof {wallet, txHash, payload}
+- insert into Supabase (service role)
+- minimal unified diff only
+""" + str(context_text)
 
     resp = client.chat.completions.create(
         model="deepseek-chat",
